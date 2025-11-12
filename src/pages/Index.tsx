@@ -384,7 +384,7 @@ const Index = () => {
     <div className="min-h-screen bg-background p-2 md:p-2 pb-12 md:pb-2">
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
-          <TabsList className="w-full justify-start overflow-x-auto bg-card mb-12 md:mb-2 h-auto flex-wrap order-2 md:order-1 mt-2 md:mt-0">
+          <TabsList className="w-full justify-center md:justify-start overflow-x-auto bg-card mb-12 md:mb-2 h-auto flex-wrap order-2 md:order-1 mt-2 md:mt-0">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.id}
