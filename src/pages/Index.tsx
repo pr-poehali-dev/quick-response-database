@@ -14,7 +14,7 @@ const API_URLS = {
 };
 
 const GRID_CONFIG = {
-  rows: 20,
+  rows: 25,
   cols: 15,
   desktopWidth: 368
 };
