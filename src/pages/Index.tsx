@@ -137,32 +137,15 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-2 md:p-4">
+    <div className="min-h-screen bg-background p-2">
       <div className="max-w-[100vw] mx-auto">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
-            <Icon name="Table" size={24} />
-            Быстрые ответы
-          </h1>
-          <div className="flex gap-2">
-            <Button onClick={handleAddColumn} size="sm" variant="outline">
-              <Icon name="Plus" size={16} />
-              <span className="hidden md:inline ml-1">Столбец</span>
-            </Button>
-            <Button onClick={handleAddRow} size="sm" variant="outline">
-              <Icon name="Plus" size={16} />
-              <span className="hidden md:inline ml-1">Строка</span>
-            </Button>
-          </div>
-        </div>
-
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full">
-          <TabsList className="w-full justify-start overflow-x-auto bg-card mb-4 h-auto flex-wrap md:flex-nowrap">
+          <TabsList className="w-full justify-start overflow-x-auto bg-card mb-2 h-auto flex-wrap md:flex-nowrap">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.id}
                 value={tab.id.toString()}
-                className="text-xs md:text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="text-xs md:text-sm px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 {tab.name}
               </TabsTrigger>
@@ -173,10 +156,7 @@ const Index = () => {
             <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0">
               <div className="border border-border rounded-lg overflow-auto bg-card">
                 <div className="min-w-max">
-                  <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `40px repeat(${COLS}, 120px)` }}>
-                    <div className="bg-muted text-muted-foreground text-xs font-medium p-1 flex items-center justify-center sticky left-0 z-10">
-                      #
-                    </div>
+                  <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `repeat(${COLS}, 120px)` }}>
                     {Array.from({ length: COLS }, (_, i) => (
                       <div key={i} className="bg-muted text-muted-foreground text-xs font-medium p-1 text-center">
                         {String.fromCharCode(65 + i)}
@@ -185,9 +165,6 @@ const Index = () => {
 
                     {Array.from({ length: ROWS }, (_, row) => (
                       <>
-                        <div key={`row-${row}`} className="bg-muted text-muted-foreground text-xs font-medium p-1 flex items-center justify-center sticky left-0 z-10">
-                          {row + 1}
-                        </div>
                         {Array.from({ length: COLS }, (_, col) => {
                           const key = getCellKey(tab.id, row, col);
                           const cell = cells[key];
