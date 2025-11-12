@@ -19,7 +19,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
                 'Access-Control-Max-Age': '86400'
             },
@@ -102,6 +102,39 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({'image': image}),
+            'isBase64Encoded': False
+        }
+    
+    if method == 'DELETE':
+        params = event.get('queryStringParameters', {})
+        image_id = params.get('id')
+        
+        if not image_id:
+            cursor.close()
+            conn.close()
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': 'id required'}),
+                'isBase64Encoded': False
+            }
+        
+        cursor.execute('DELETE FROM images WHERE id = %s', (int(image_id),))
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'success': True}),
             'isBase64Encoded': False
         }
     

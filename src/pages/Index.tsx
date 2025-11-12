@@ -47,7 +47,7 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    if (activeTab) {
+    if (activeTab && tabs.length > 0) {
       const currentTab = tabs.find(t => t.id === activeTab);
       if (currentTab?.name === 'Картинки') {
         loadImages();
@@ -55,7 +55,7 @@ const Index = () => {
         loadCells(activeTab);
       }
     }
-  }, [activeTab, tabs]);
+  }, [activeTab]);
 
   const loadTabs = async () => {
     try {
@@ -211,6 +211,22 @@ const Index = () => {
     }
   };
 
+  const handleImageDelete = async (e: React.MouseEvent, imageId: number) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch(`https://functions.poehali.dev/98030051-bc07-464d-98f9-7504adfd39e1?id=${imageId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setImages(prev => prev.filter(img => img.id !== imageId));
+        toast.success('Изображение удалено!');
+      }
+    } catch (error) {
+      toast.error('Ошибка удаления изображения');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-2">
       <div className="max-w-[100vw] mx-auto">
@@ -258,9 +274,17 @@ const Index = () => {
                             alt={image.file_name}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                             <Icon name="Copy" size={24} className="text-white" />
                           </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                            onClick={(e) => handleImageDelete(e, image.id)}
+                          >
+                            <Icon name="Trash2" size={16} />
+                          </Button>
                         </div>
                         <div className="p-2">
                           <p className="text-xs text-muted-foreground truncate">{image.file_name}</p>
