@@ -359,11 +359,6 @@ const Index = () => {
                 </div>
               ) : (
                 <>
-                  {!isMobile && (
-                    <div className="mb-2 text-sm text-muted-foreground text-center">
-                      Нажмите <kbd className="px-2 py-1 bg-muted rounded text-xs font-mono">Пробел</kbd> для переключения строк {showNextRows ? '6-10' : '1-5'}
-                    </div>
-                  )}
                   <div className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-8rem)] md:h-auto md:overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" onWheel={(e) => {
                     if (window.innerWidth >= 768 && Math.abs(e.deltaY) > 0) {
                       e.preventDefault();
