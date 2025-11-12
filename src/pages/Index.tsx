@@ -382,16 +382,10 @@ const Index = () => {
               ) : (
                 <>
                   <div 
-                    className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-10rem)] md:h-auto md:overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+                    className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-10rem)] md:h-[calc(100vh-12rem)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
                     ref={(el) => {
                       if (el) {
                         el.scrollLeft = scrollToColumn * colWidth;
-                      }
-                    }}
-                    onWheel={(e) => {
-                      if (window.innerWidth >= 768 && Math.abs(e.deltaY) > 0) {
-                        e.preventDefault();
-                        e.currentTarget.scrollLeft += e.deltaY;
                       }
                     }}
                   >
