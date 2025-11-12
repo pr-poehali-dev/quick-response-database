@@ -460,34 +460,36 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
-      {isMobile && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-4 pt-2 px-2 space-y-2">
-          {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-            <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {Array.from({ length: 10 }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setScrollToColumn(i)}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
-                    scrollToColumn === i 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+          {isMobile && (
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-4 pt-2 px-2 space-y-2 z-50">
+              {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
+                <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setScrollToColumn(i)}
+                      className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
+                        scrollToColumn === i 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
+                {tabs.map(tab => (
+                  <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    {tab.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
             </div>
           )}
-          <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
-            {tabs.map(tab => (
-              <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                {tab.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-      )}
+        </Tabs>
+      </div>
     </div>
   );
 };
