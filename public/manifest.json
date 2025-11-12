@@ -1,7 +1,7 @@
 {
-  "name": "Таблица упражнений",
-  "short_name": "Таблица",
-  "description": "Приложение для работы с таблицей упражнений",
+  "name": "ОТВЕТЫ",
+  "short_name": "ОТВЕТЫ",
+  "description": "Система быстрых ответов",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
