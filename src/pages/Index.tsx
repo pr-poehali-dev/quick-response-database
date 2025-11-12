@@ -41,11 +41,18 @@ const Index = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [uploading, setUploading] = useState(false);
   const [deleteImageId, setDeleteImageId] = useState<number | null>(null);
+  const [columnNames, setColumnNames] = useState<Record<number, string>>({});
+  const [editingColumn, setEditingColumn] = useState<number | null>(null);
+  const [editColumnValue, setEditColumnValue] = useState('');
 
   const getCellKey = (tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`;
 
   useEffect(() => {
     loadTabs();
+    const savedColumns = localStorage.getItem('columnNames');
+    if (savedColumns) {
+      setColumnNames(JSON.parse(savedColumns));
+    }
   }, []);
 
   useEffect(() => {
@@ -153,6 +160,25 @@ const Index = () => {
       setEditingCell(null);
       setEditValue('');
     }
+  };
+
+  const handleColumnDoubleClick = (colIndex: number) => {
+    setEditColumnValue(columnNames[colIndex] || `УРОК ${colIndex + 1}`);
+    setEditingColumn(colIndex);
+  };
+
+  const handleSaveColumnName = () => {
+    if (editingColumn === null) return;
+    
+    const newColumnNames = {
+      ...columnNames,
+      [editingColumn]: editColumnValue
+    };
+    setColumnNames(newColumnNames);
+    localStorage.setItem('columnNames', JSON.stringify(newColumnNames));
+    setEditingColumn(null);
+    setEditColumnValue('');
+    toast.success('Название колонки сохранено!');
   };
 
   const handleAddColumn = () => {
@@ -347,8 +373,12 @@ const Index = () => {
                   <div className="min-w-max">
                     <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `repeat(${COLS}, ${window.innerWidth >= 768 ? '290px' : '240px'})` }}>
                       {Array.from({ length: COLS }, (_, i) => (
-                        <div key={i} className="bg-muted text-muted-foreground text-xs font-medium p-2 text-center">
-                          УРОК {i + 1}
+                        <div 
+                          key={i} 
+                          className="bg-muted text-muted-foreground text-xs font-medium p-2 text-center cursor-pointer hover:bg-muted/80 transition-colors"
+                          onDoubleClick={() => handleColumnDoubleClick(i)}
+                        >
+                          {columnNames[i] || `УРОК ${i + 1}`}
                         </div>
                       ))}
 
@@ -427,6 +457,32 @@ const Index = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={editingColumn !== null} onOpenChange={(open) => !open && setEditingColumn(null)}>
+        <DialogContent className="bg-card">
+          <DialogHeader>
+            <DialogTitle>Переименовать колонку</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={editColumnValue}
+              onChange={(e) => setEditColumnValue(e.target.value)}
+              placeholder="Название колонки..."
+              className="w-full p-2 rounded bg-background border border-border text-foreground"
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditingColumn(null)}>
+                Отмена
+              </Button>
+              <Button onClick={handleSaveColumnName}>
+                Сохранить
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
