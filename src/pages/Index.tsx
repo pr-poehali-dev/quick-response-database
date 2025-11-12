@@ -343,7 +343,7 @@ const Index = () => {
                             return (
                               <div
                                 key={`${row}-${col}`}
-                                className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[81px] group relative"
+                                className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[81px] md:min-h-[91px] group relative"
                                 onClick={() => handleCellClick(row, col)}
                                 onDoubleClick={() => handleCellDoubleClick(row, col)}
                               >
