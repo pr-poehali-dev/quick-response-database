@@ -410,8 +410,8 @@ const Index = () => {
                         const key = getCellKey(tab.id, row, col);
                         const cell = cells[key];
                         return (
-                          <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-3 min-h-[110px] md:min-h-[105px] group relative" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
-                            <div className="text-base text-foreground line-clamp-6 whitespace-pre-wrap break-words">{cell?.content || ''}</div>
+                          <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-3 min-h-[160px] md:min-h-[105px] group relative" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
+                            <div className="text-base text-foreground line-clamp-[8] whitespace-pre-wrap break-words">{cell?.content || ''}</div>
                             {cell?.content && <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
                           </div>
                         );
