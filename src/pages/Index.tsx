@@ -214,10 +214,30 @@ const Index = () => {
 
   const handleImageClick = async (imageUrl: string) => {
     try {
-      await navigator.clipboard.writeText(imageUrl);
-      toast.success('Ссылка на изображение скопирована!');
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = imageUrl;
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0);
+      
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          const item = new ClipboardItem({ 'image/png': blob });
+          await navigator.clipboard.write([item]);
+          toast.success('Изображение скопировано!');
+        }
+      }, 'image/png');
     } catch (error) {
-      toast.error('Ошибка копирования');
+      toast.error('Ошибка копирования изображения');
     }
   };
 
