@@ -97,5 +97,12 @@
 
   body {
     @apply bg-background text-foreground;
+    overflow: hidden;
+  }
+
+  @media (min-width: 768px) {
+    body {
+      overflow: hidden;
+    }
   }
 }
