@@ -368,7 +368,7 @@ const Index = () => {
       </div>
 
       <Dialog open={editingCell !== null} onOpenChange={(open) => !open && setEditingCell(null)}>
-        <DialogContent className="bg-card">
+        <DialogContent className="bg-card md:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Редактировать ячейку</DialogTitle>
           </DialogHeader>
@@ -377,8 +377,8 @@ const Index = () => {
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               placeholder="Введите текст..."
-              rows={6}
-              className="resize-none bg-background"
+              rows={18}
+              className="resize-none bg-background md:min-h-[500px]"
             />
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setEditingCell(null)}>
