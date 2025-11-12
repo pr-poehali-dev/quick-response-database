@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import Icon from '@/components/ui/icon';
@@ -39,6 +40,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [images, setImages] = useState<Image[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [deleteImageId, setDeleteImageId] = useState<number | null>(null);
 
   const getCellKey = (tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`;
 
@@ -211,19 +213,27 @@ const Index = () => {
     }
   };
 
-  const handleImageDelete = async (e: React.MouseEvent, imageId: number) => {
+  const handleImageDeleteClick = (e: React.MouseEvent, imageId: number) => {
     e.stopPropagation();
+    setDeleteImageId(imageId);
+  };
+
+  const handleImageDeleteConfirm = async () => {
+    if (!deleteImageId) return;
+    
     try {
-      const response = await fetch(`https://functions.poehali.dev/98030051-bc07-464d-98f9-7504adfd39e1?id=${imageId}`, {
+      const response = await fetch(`https://functions.poehali.dev/98030051-bc07-464d-98f9-7504adfd39e1?id=${deleteImageId}`, {
         method: 'DELETE'
       });
 
       if (response.ok) {
-        setImages(prev => prev.filter(img => img.id !== imageId));
+        setImages(prev => prev.filter(img => img.id !== deleteImageId));
         toast.success('Изображение удалено!');
       }
     } catch (error) {
       toast.error('Ошибка удаления изображения');
+    } finally {
+      setDeleteImageId(null);
     }
   };
 
@@ -281,7 +291,7 @@ const Index = () => {
                             size="sm"
                             variant="destructive"
                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-                            onClick={(e) => handleImageDelete(e, image.id)}
+                            onClick={(e) => handleImageDeleteClick(e, image.id)}
                           >
                             <Icon name="Trash2" size={16} />
                           </Button>
@@ -361,6 +371,23 @@ const Index = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteImageId !== null} onOpenChange={(open) => !open && setDeleteImageId(null)}>
+        <AlertDialogContent className="bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить изображение?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Изображение будет удалено навсегда.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteImageId(null)}>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleImageDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
