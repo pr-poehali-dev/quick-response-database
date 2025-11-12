@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Get all tabs",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "tabs": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

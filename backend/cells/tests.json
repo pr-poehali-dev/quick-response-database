@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "Get cells for tab",
+      "method": "GET",
+      "path": "/?tab_id=1",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "cells": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Save cell content",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "tab_id": 1,
+        "row_index": 0,
+        "col_index": 0,
+        "content": "Test content"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "cell": "object"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
