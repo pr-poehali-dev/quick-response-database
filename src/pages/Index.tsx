@@ -329,7 +329,8 @@ const Index = () => {
   };
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const colWidth = isMobile ? GRID_CONFIG.mobileWidth : GRID_CONFIG.desktopWidth;
+  const mobileColWidth = typeof window !== 'undefined' ? window.innerWidth - 16 : GRID_CONFIG.mobileWidth;
+  const colWidth = isMobile ? mobileColWidth : GRID_CONFIG.desktopWidth;
 
   return (
     <div className="min-h-screen bg-background p-2 md:pb-2">
@@ -363,7 +364,7 @@ const Index = () => {
           </div>
 
           {tabs.map(tab => (
-            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 flex-1 md:flex-none mb-28 md:mb-0">
+            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 flex-1 md:flex-none mb-32 md:mb-0">
               {tab.name === 'Картинки' ? (
                 <div className="space-y-4">
                   <Button onClick={() => document.getElementById('image-upload')?.click()} disabled={uploading}>
@@ -424,7 +425,7 @@ const Index = () => {
           ))}
 
           {isMobile && (
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-4 pt-2 px-2 space-y-2 z-50">
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-8 pt-2 px-2 space-y-2 z-50">
               {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
                 <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {Array.from({ length: 10 }, (_, i) => (
