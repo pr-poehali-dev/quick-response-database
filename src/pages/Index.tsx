@@ -132,15 +132,25 @@ const Index = () => {
   }, [activeTab, tabs]);
 
   const loadTabs = async () => {
-    try {
-      const response = await fetch('https://functions.poehali.dev/86104f38-169c-4ce4-b077-38f1883a61c5');
-      const data = await response.json();
-      setTabs(data.tabs || []);
-      if (data.tabs && data.tabs.length > 0) {
-        setActiveTab(data.tabs[0].id);
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const response = await fetch('https://functions.poehali.dev/86104f38-169c-4ce4-b077-38f1883a61c5');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        setTabs(data.tabs || []);
+        if (data.tabs && data.tabs.length > 0) {
+          setActiveTab(data.tabs[0].id);
+        }
+        return;
+      } catch (error) {
+        retries--;
+        if (retries === 0) {
+          toast.error('Ошибка загрузки вкладок');
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
-    } catch (error) {
-      toast.error('Ошибка загрузки вкладок');
     }
   };
 
