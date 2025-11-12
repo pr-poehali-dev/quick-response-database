@@ -17,7 +17,7 @@ const GRID_CONFIG = {
   rows: 20,
   cols: 15,
   mobileWidth: 300,
-  desktopWidth: 368
+  desktopWidth: 184
 };
 
 interface LazyImageProps {
@@ -337,7 +337,7 @@ const Index = () => {
     <div className="min-h-screen bg-background p-2 md:pb-2">
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
-          <div className="hidden md:flex items-center justify-between gap-2 mb-2">
+          <div className="hidden md:block space-y-2 mb-2">
             <TabsList className="justify-center md:justify-start overflow-x-auto bg-card h-auto flex-wrap">
               {tabs.map(tab => (
                 <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -346,7 +346,7 @@ const Index = () => {
               ))}
             </TabsList>
             {!isMobile && tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-              <div className="hidden md:flex items-center gap-1 bg-card rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-card rounded-lg p-1">
                 {Array.from({ length: 10 }, (_, i) => (
                   <button
                     key={i}
@@ -398,7 +398,7 @@ const Index = () => {
                     <div className="min-w-max">
                     <div className="grid gap-[1px] md:gap-[2px] bg-border p-[1px] md:p-[2px]" style={{ gridTemplateColumns: `repeat(${GRID_CONFIG.cols}, ${colWidth}px)` }}>
                       {Array.from({ length: GRID_CONFIG.cols }, (_, i) => (
-                        <div key={i} className="bg-muted text-muted-foreground text-base font-medium p-3 text-center cursor-pointer hover:bg-muted/80 transition-colors" onDoubleClick={() => handleColumnDoubleClick(i)}>
+                        <div key={i} className="bg-muted text-muted-foreground text-base md:text-xs font-medium p-3 md:p-2 text-center cursor-pointer hover:bg-muted/80 transition-colors" onDoubleClick={() => handleColumnDoubleClick(i)}>
                           {columnNames[i] || `УРОК ${i + 1}`}
                         </div>
                       ))}
