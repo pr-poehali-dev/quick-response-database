@@ -249,12 +249,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-2 overflow-hidden" onWheel={(e) => {
-      if (window.innerWidth >= 768) {
-        e.preventDefault();
-      }
-    }}>
-      <div className="max-w-[100vw] mx-auto h-[calc(100vh-1rem)]">
+    <div className="min-h-screen bg-background p-2">
+      <div className="max-w-[100vw] mx-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto bg-card mb-2 h-auto flex-wrap">
             {tabs.map((tab) => (
@@ -320,8 +316,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div 
-                  className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card max-h-[calc(100vh-8rem)]"
-                  tabIndex={0}
+                  className="border border-border rounded-lg overflow-x-auto overflow-y-hidden bg-card"
                   onWheel={(e) => {
                     if (window.innerWidth >= 768 && Math.abs(e.deltaY) > 0) {
                       e.preventDefault();
@@ -331,27 +326,9 @@ const Index = () => {
                       return false;
                     }
                   }}
-                  onKeyDown={(e) => {
-                    if (window.innerWidth >= 768) {
-                      const container = e.currentTarget;
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        container.scrollTop -= 108;
-                      } else if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        container.scrollTop += 108;
-                      } else if (e.key === 'ArrowLeft') {
-                        e.preventDefault();
-                        container.scrollLeft -= 240;
-                      } else if (e.key === 'ArrowRight') {
-                        e.preventDefault();
-                        container.scrollLeft += 240;
-                      }
-                    }
-                  }}
                 >
                   <div className="min-w-max">
-                    <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `repeat(${COLS}, 240px)` }}>
+                    <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `repeat(${COLS}, ${window.innerWidth >= 768 ? '290px' : '240px'})` }}>
                       {Array.from({ length: COLS }, (_, i) => (
                         <div key={i} className="bg-muted text-muted-foreground text-xs font-medium p-2 text-center">
                           УРОК {i + 1}
@@ -366,7 +343,7 @@ const Index = () => {
                             return (
                               <div
                                 key={`${row}-${col}`}
-                                className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[108px] group relative"
+                                className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[81px] group relative"
                                 onClick={() => handleCellClick(row, col)}
                                 onDoubleClick={() => handleCellDoubleClick(row, col)}
                               >
