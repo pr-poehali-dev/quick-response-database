@@ -364,7 +364,7 @@ const Index = () => {
           </div>
 
           {tabs.map(tab => (
-            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 flex-1 md:flex-none mb-32 md:mb-0">
+            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 flex-1 md:flex-none mb-[168px] md:mb-0">
               {tab.name === 'Картинки' ? (
                 <div className="space-y-4">
                   <Button onClick={() => document.getElementById('image-upload')?.click()} disabled={uploading}>
@@ -410,8 +410,8 @@ const Index = () => {
                         const key = getCellKey(tab.id, row, col);
                         const cell = cells[key];
                         return (
-                          <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-3 min-h-[calc(100vh-20rem)] md:min-h-[105px] group relative" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
-                            <div className="text-base text-foreground whitespace-pre-wrap break-words">{cell?.content || ''}</div>
+                          <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-3 min-h-[110px] md:min-h-[105px] group relative" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
+                            <div className="text-base text-foreground line-clamp-6 whitespace-pre-wrap break-words">{cell?.content || ''}</div>
                             {cell?.content && <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
                           </div>
                         );
