@@ -1,0 +1,24 @@
+{
+  "name": "Таблица упражнений",
+  "short_name": "Таблица",
+  "description": "Приложение для работы с таблицей упражнений",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://cdn.poehali.dev/projects/a1760945-d36b-4909-b798-031186650857/files/43253e20-9305-4481-a1c2-303b6e1bbf80.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn.poehali.dev/projects/a1760945-d36b-4909-b798-031186650857/files/43253e20-9305-4481-a1c2-303b6e1bbf80.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
