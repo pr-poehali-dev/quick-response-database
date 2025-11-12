@@ -316,12 +316,31 @@ const Index = () => {
                 </div>
               ) : (
                 <div 
-                  className="border border-border rounded-lg overflow-x-auto overflow-y-hidden bg-card max-h-[calc(100vh-8rem)]"
+                  className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card max-h-[calc(100vh-8rem)]"
+                  tabIndex={0}
                   onWheel={(e) => {
                     if (window.innerWidth >= 768) {
                       e.preventDefault();
                       const container = e.currentTarget;
                       container.scrollLeft += e.deltaY;
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (window.innerWidth >= 768) {
+                      const container = e.currentTarget;
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        container.scrollTop -= 108;
+                      } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        container.scrollTop += 108;
+                      } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        container.scrollLeft -= 240;
+                      } else if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        container.scrollLeft += 240;
+                      }
                     }
                   }}
                 >
