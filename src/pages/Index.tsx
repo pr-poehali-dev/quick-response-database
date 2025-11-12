@@ -21,7 +21,7 @@ interface Tab {
 }
 
 const ROWS = 20;
-const COLS = 10;
+const COLS = 15;
 
 const Index = () => {
   const [tabs, setTabs] = useState<Tab[]>([]);
