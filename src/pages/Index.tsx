@@ -186,7 +186,10 @@ const Index = () => {
       setCells(cellsMap);
       localStorage.setItem(`cells_tab_${tabId}`, JSON.stringify(cellsMap));
     } catch (error) {
-      toast.error('Ошибка загрузки данных');
+      const cachedData = localStorage.getItem(`cells_tab_${tabId}`);
+      if (!cachedData) {
+        toast.error('Ошибка загрузки данных');
+      }
     } finally {
       setLoading(false);
     }
@@ -282,7 +285,7 @@ const Index = () => {
       const data = await response.json();
       setImages(data.images || []);
     } catch (error) {
-      toast.error('Ошибка загрузки изображений');
+      setImages([]);
     } finally {
       setLoading(false);
     }
