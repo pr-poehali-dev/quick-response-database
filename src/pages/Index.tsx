@@ -103,7 +103,6 @@ const Index = () => {
   const [editingColumn, setEditingColumn] = useState<number | null>(null);
   const [editColumnValue, setEditColumnValue] = useState('');
   const [imageCache, setImageCache] = useState<Record<number, string>>({});
-  const [showNextRows, setShowNextRows] = useState(false);
   const [scrollToColumn, setScrollToColumn] = useState<number>(0);
 
   const getCellKey = useCallback((tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`, []);
@@ -122,16 +121,7 @@ const Index = () => {
     }
   }, [activeTab, tabs]);
 
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !editingCell && !editingColumn && window.innerWidth >= 768) {
-        e.preventDefault();
-        setShowNextRows(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [editingCell, editingColumn]);
+
 
   const loadTabs = async () => {
     try {
@@ -399,9 +389,6 @@ const Index = () => {
                       {Array.from({ length: GRID_CONFIG.rows * GRID_CONFIG.cols }, (_, idx) => {
                         const row = Math.floor(idx / GRID_CONFIG.cols);
                         const col = idx % GRID_CONFIG.cols;
-                        const startRow = isMobile ? 0 : (showNextRows ? 5 : 0);
-                        const endRow = isMobile ? GRID_CONFIG.rows : (showNextRows ? 10 : 5);
-                        if (row < startRow || row >= endRow) return null;
                         const key = getCellKey(tab.id, row, col);
                         const cell = cells[key];
                         return (
