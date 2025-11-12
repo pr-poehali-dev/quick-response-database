@@ -381,10 +381,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-2">
-      <div className="max-w-[100vw] mx-auto">
-        <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full">
-          <TabsList className="w-full justify-start overflow-x-auto bg-card mb-2 h-auto flex-wrap">
+    <div className="min-h-screen bg-background p-2 md:p-2">
+      <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
+        <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
+          <TabsList className="w-full justify-start overflow-x-auto bg-card mb-2 h-auto flex-wrap order-2 md:order-1 mt-2 md:mt-0">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.id}
@@ -397,7 +397,7 @@ const Index = () => {
           </TabsList>
 
           {tabs.map((tab) => (
-            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0">
+            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 order-1 md:order-2 flex-1 md:flex-none">
               {tab.name === 'Картинки' ? (
                 <div className="space-y-4">
                   <div className="flex justify-start">
