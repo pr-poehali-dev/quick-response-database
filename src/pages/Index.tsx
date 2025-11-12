@@ -75,6 +75,14 @@ const Index = () => {
   const loadCells = async (tabId: number) => {
     try {
       setLoading(true);
+      
+      const cachedData = localStorage.getItem(`cells_tab_${tabId}`);
+      if (cachedData) {
+        const cellsMap: Record<string, Cell> = JSON.parse(cachedData);
+        setCells(cellsMap);
+        setLoading(false);
+      }
+      
       const response = await fetch(`https://functions.poehali.dev/f2f9a3f0-13c8-4862-8b02-aea4ab6b62d4?tab_id=${tabId}`);
       const data = await response.json();
       const cellsMap: Record<string, Cell> = {};
@@ -83,6 +91,7 @@ const Index = () => {
         cellsMap[key] = cell;
       });
       setCells(cellsMap);
+      localStorage.setItem(`cells_tab_${tabId}`, JSON.stringify(cellsMap));
     } catch (error) {
       toast.error('Ошибка загрузки данных');
     } finally {
@@ -125,15 +134,17 @@ const Index = () => {
 
       if (response.ok) {
         const key = getCellKey(activeTab, editingCell.row, editingCell.col);
-        setCells(prev => ({
-          ...prev,
+        const updatedCells = {
+          ...cells,
           [key]: {
             tab_id: activeTab,
             row_index: editingCell.row,
             col_index: editingCell.col,
             content: editValue,
           }
-        }));
+        };
+        setCells(updatedCells);
+        localStorage.setItem(`cells_tab_${activeTab}`, JSON.stringify(updatedCells));
         toast.success('Сохранено!');
       }
     } catch (error) {
