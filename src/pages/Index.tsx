@@ -119,6 +119,7 @@ const Index = () => {
     if (activeTab && tabs.length > 0) {
       const currentTab = tabs.find(t => t.id === activeTab);
       currentTab?.name === 'Картинки' ? loadImages() : loadCells(activeTab);
+      setScrollToColumn(0);
     }
   }, [activeTab, tabs]);
 
