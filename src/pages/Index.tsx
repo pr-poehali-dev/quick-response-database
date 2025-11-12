@@ -105,6 +105,7 @@ const Index = () => {
   const [editColumnValue, setEditColumnValue] = useState('');
   const [imageCache, setImageCache] = useState<Record<number, string>>({});
   const [showNextRows, setShowNextRows] = useState(false);
+  const [scrollToColumn, setScrollToColumn] = useState<number>(0);
 
   const getCellKey = useCallback((tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`, []);
 
@@ -334,13 +335,32 @@ const Index = () => {
     <div className="min-h-screen bg-background p-2 pb-12 md:pb-2">
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
-          <TabsList className="w-full justify-center md:justify-start overflow-x-auto bg-card mb-12 md:mb-2 h-auto flex-wrap order-2 md:order-1 mt-2 md:mt-0">
-            {tabs.map(tab => (
-              <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                {tab.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <TabsList className="justify-center md:justify-start overflow-x-auto bg-card h-auto flex-wrap">
+              {tabs.map(tab => (
+                <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  {tab.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {!isMobile && tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
+              <div className="hidden md:flex items-center gap-1 bg-card rounded-lg p-1">
+                {Array.from({ length: 10 }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setScrollToColumn(i)}
+                    className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                      scrollToColumn === i 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {tabs.map(tab => (
             <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 order-1 md:order-2 flex-1 md:flex-none">
@@ -359,12 +379,20 @@ const Index = () => {
                 </div>
               ) : (
                 <>
-                  <div className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-8rem)] md:h-auto md:overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" onWheel={(e) => {
-                    if (window.innerWidth >= 768 && Math.abs(e.deltaY) > 0) {
-                      e.preventDefault();
-                      e.currentTarget.scrollLeft += e.deltaY;
-                    }
-                  }}>
+                  <div 
+                    className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-8rem)] md:h-auto md:overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+                    ref={(el) => {
+                      if (el && !isMobile) {
+                        el.scrollLeft = scrollToColumn * colWidth;
+                      }
+                    }}
+                    onWheel={(e) => {
+                      if (window.innerWidth >= 768 && Math.abs(e.deltaY) > 0) {
+                        e.preventDefault();
+                        e.currentTarget.scrollLeft += e.deltaY;
+                      }
+                    }}
+                  >
                     <div className="min-w-max">
                     <div className="grid gap-[1px] md:gap-[2px] bg-border p-[1px] md:p-[2px]" style={{ gridTemplateColumns: `repeat(${GRID_CONFIG.cols}, ${colWidth}px)` }}>
                       {Array.from({ length: GRID_CONFIG.cols }, (_, i) => (
