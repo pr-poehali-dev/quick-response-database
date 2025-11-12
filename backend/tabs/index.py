@@ -38,8 +38,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     database_url = os.environ.get('DATABASE_URL')
     
-    conn = psycopg2.connect(database_url)
-    cursor = conn.cursor()
+    try:
+        conn = psycopg2.connect(database_url)
+        conn.autocommit = True
+        cursor = conn.cursor()
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': f'Database connection failed: {str(e)}'}),
+            'isBase64Encoded': False
+        }
     
     cursor.execute('SELECT id, name, position FROM tabs ORDER BY position')
     rows = cursor.fetchall()

@@ -26,8 +26,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     database_url = os.environ.get('DATABASE_URL')
-    conn = psycopg2.connect(database_url)
-    cursor = conn.cursor()
+    
+    try:
+        conn = psycopg2.connect(database_url)
+        conn.autocommit = True
+        cursor = conn.cursor()
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': f'Database connection failed: {str(e)}'}),
+            'isBase64Encoded': False
+        }
     
     if method == 'GET':
         params = event.get('queryStringParameters', {})
@@ -47,8 +60,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         cursor.execute(
-            'SELECT id, tab_id, row_index, col_index, content FROM cells WHERE tab_id = %s',
-            (int(tab_id),)
+            f'SELECT id, tab_id, row_index, col_index, content FROM cells WHERE tab_id = {int(tab_id)}'
         )
         rows = cursor.fetchall()
         
@@ -95,19 +107,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
+        safe_content = content.replace("'", "''")
+        
         cursor.execute(
-            '''
+            f'''
             INSERT INTO cells (tab_id, row_index, col_index, content, updated_at)
-            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            VALUES ({int(tab_id)}, {int(row_index)}, {int(col_index)}, '{safe_content}', CURRENT_TIMESTAMP)
             ON CONFLICT (tab_id, row_index, col_index)
             DO UPDATE SET content = EXCLUDED.content, updated_at = CURRENT_TIMESTAMP
             RETURNING id, tab_id, row_index, col_index, content
-            ''',
-            (int(tab_id), int(row_index), int(col_index), content)
+            '''
         )
         
         row = cursor.fetchone()
-        conn.commit()
         
         cell = {
             'id': row[0],
