@@ -249,8 +249,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-2">
-      <div className="max-w-[100vw] mx-auto">
+    <div className="min-h-screen bg-background p-2 overflow-hidden">
+      <div className="max-w-[100vw] mx-auto h-[calc(100vh-1rem)]">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto bg-card mb-2 h-auto flex-wrap">
             {tabs.map((tab) => (
@@ -316,11 +316,12 @@ const Index = () => {
                 </div>
               ) : (
                 <div 
-                  className="border border-border rounded-lg overflow-x-auto overflow-y-hidden bg-card"
+                  className="border border-border rounded-lg overflow-x-auto overflow-y-hidden bg-card max-h-[calc(100vh-8rem)]"
                   onWheel={(e) => {
                     if (window.innerWidth >= 768) {
                       e.preventDefault();
-                      e.currentTarget.scrollLeft += e.deltaY;
+                      const container = e.currentTarget;
+                      container.scrollLeft += e.deltaY;
                     }
                   }}
                 >
