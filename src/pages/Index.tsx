@@ -319,10 +319,12 @@ const Index = () => {
                   className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card max-h-[calc(100vh-8rem)]"
                   tabIndex={0}
                   onWheel={(e) => {
-                    if (window.innerWidth >= 768) {
+                    if (window.innerWidth >= 768 && Math.abs(e.deltaY) > 0) {
                       e.preventDefault();
+                      e.stopPropagation();
                       const container = e.currentTarget;
                       container.scrollLeft += e.deltaY;
+                      return false;
                     }
                   }}
                   onKeyDown={(e) => {
