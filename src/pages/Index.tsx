@@ -214,13 +214,10 @@ const Index = () => {
 
   const handleImageClick = async (imageUrl: string) => {
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const item = new ClipboardItem({ [blob.type]: blob });
-      await navigator.clipboard.write([item]);
-      toast.success('Изображение скопировано!');
+      await navigator.clipboard.writeText(imageUrl);
+      toast.success('Ссылка на изображение скопирована!');
     } catch (error) {
-      toast.error('Ошибка копирования изображения');
+      toast.error('Ошибка копирования');
     }
   };
 
