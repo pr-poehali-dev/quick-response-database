@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Управление ячейками таблицы (GET для получения, POST для сохранения)
+    Business: Управление ячейками таблицы проекта (GET для получения, POST для сохранения)
     Args: event - dict with httpMethod, queryStringParameters, body
           context - object with request_id
     Returns: HTTP response dict with cells data

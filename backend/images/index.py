@@ -8,7 +8,7 @@ from typing import Dict, Any
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Управление изображениями (GET для получения списка, POST для загрузки)
+    Business: Управление изображениями проекта (GET для получения списка, POST для загрузки)
     Args: event - dict with httpMethod, body
           context - object with request_id
     Returns: HTTP response dict with images data

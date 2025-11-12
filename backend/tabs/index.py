@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Получить список всех вкладок
+    Business: Получить список всех вкладок проекта
     Args: event - dict with httpMethod
           context - object with request_id
     Returns: HTTP response dict with tabs list
