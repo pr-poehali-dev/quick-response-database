@@ -441,11 +441,11 @@ const Index = () => {
                   }}
                 >
                   <div className="min-w-max">
-                    <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `repeat(${COLS}, ${window.innerWidth >= 768 ? '290px' : '264px'})` }}>
+                    <div className="grid gap-[1px] md:gap-[2px] bg-border p-[1px] md:p-[2px]" style={{ gridTemplateColumns: `repeat(${COLS}, ${window.innerWidth >= 768 ? '320px' : '264px'})` }}>
                       {Array.from({ length: COLS }, (_, i) => (
                         <div 
                           key={i} 
-                          className="bg-muted text-muted-foreground text-sm md:text-xs font-medium p-2 text-center cursor-pointer hover:bg-muted/80 transition-colors"
+                          className="bg-muted text-muted-foreground text-sm md:text-sm font-medium p-2 md:p-3 text-center cursor-pointer hover:bg-muted/80 transition-colors"
                           onDoubleClick={() => handleColumnDoubleClick(i)}
                         >
                           {columnNames[i] || `УРОК ${i + 1}`}
@@ -460,11 +460,11 @@ const Index = () => {
                             return (
                               <div
                                 key={`${row}-${col}`}
-                                className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[89px] md:min-h-[91px] group relative"
+                                className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 md:p-3 min-h-[89px] md:min-h-[105px] group relative"
                                 onClick={() => handleCellClick(row, col)}
                                 onDoubleClick={() => handleCellDoubleClick(row, col)}
                               >
-                                <div className="text-sm md:text-xs text-foreground line-clamp-6 whitespace-pre-wrap break-words">
+                                <div className="text-sm md:text-sm text-foreground line-clamp-6 whitespace-pre-wrap break-words">
                                   {cell?.content || ''}
                                 </div>
                                 {cell?.content && (
