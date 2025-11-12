@@ -364,7 +364,7 @@ const Index = () => {
           </div>
 
           {tabs.map(tab => (
-            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 flex-1 md:flex-none mb-[168px] md:mb-0">
+            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 flex-1 md:flex-none mb-[140px] md:mb-0">
               {tab.name === 'Картинки' ? (
                 <div className="space-y-4">
                   <Button onClick={() => document.getElementById('image-upload')?.click()} disabled={uploading}>
