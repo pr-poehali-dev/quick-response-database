@@ -316,7 +316,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div 
-                  className="border border-border rounded-lg overflow-auto bg-card"
+                  className="border border-border rounded-lg overflow-x-auto overflow-y-hidden bg-card"
                   onWheel={(e) => {
                     if (window.innerWidth >= 768) {
                       e.preventDefault();
