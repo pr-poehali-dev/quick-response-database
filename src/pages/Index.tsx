@@ -106,7 +106,6 @@ const Index = () => {
   const [imageCache, setImageCache] = useState<Record<number, string>>({});
   const [showNextRows, setShowNextRows] = useState(false);
   const [scrollToColumn, setScrollToColumn] = useState<number>(0);
-  const [forceMobileView, setForceMobileView] = useState(false);
 
   const getCellKey = useCallback((tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`, []);
 
@@ -330,7 +329,7 @@ const Index = () => {
     }
   };
 
-  const isMobile = (typeof window !== 'undefined' && window.innerWidth < 768) || forceMobileView;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const mobileColWidth = typeof window !== 'undefined' ? window.innerWidth - 16 : GRID_CONFIG.mobileWidth;
   const colWidth = isMobile ? mobileColWidth : GRID_CONFIG.desktopWidth;
 
@@ -339,17 +338,6 @@ const Index = () => {
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
           <div className="hidden md:flex items-center justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2">
-              <Button
-                variant={forceMobileView ? "default" : "outline"}
-                size="sm"
-                onClick={() => setForceMobileView(!forceMobileView)}
-                className="flex items-center gap-2"
-              >
-                <Icon name="Smartphone" size={16} />
-                {forceMobileView ? 'Мобильный вид' : 'ПК вид'}
-              </Button>
-            </div>
             <TabsList className="justify-center md:justify-start overflow-x-auto bg-card h-auto flex-wrap">
               {tabs.map(tab => (
                 <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
