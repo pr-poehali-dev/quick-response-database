@@ -16,7 +16,7 @@ const API_URLS = {
 const GRID_CONFIG = {
   rows: 20,
   cols: 15,
-  mobileWidth: 264,
+  mobileWidth: 300,
   desktopWidth: 368
 };
 
@@ -396,7 +396,7 @@ const Index = () => {
                     <div className="min-w-max">
                     <div className="grid gap-[1px] md:gap-[2px] bg-border p-[1px] md:p-[2px]" style={{ gridTemplateColumns: `repeat(${GRID_CONFIG.cols}, ${colWidth}px)` }}>
                       {Array.from({ length: GRID_CONFIG.cols }, (_, i) => (
-                        <div key={i} className="bg-muted text-muted-foreground text-sm md:text-base font-medium p-2 md:p-3 text-center cursor-pointer hover:bg-muted/80 transition-colors" onDoubleClick={() => handleColumnDoubleClick(i)}>
+                        <div key={i} className="bg-muted text-muted-foreground text-base font-medium p-3 text-center cursor-pointer hover:bg-muted/80 transition-colors" onDoubleClick={() => handleColumnDoubleClick(i)}>
                           {columnNames[i] || `УРОК ${i + 1}`}
                         </div>
                       ))}
@@ -409,8 +409,8 @@ const Index = () => {
                         const key = getCellKey(tab.id, row, col);
                         const cell = cells[key];
                         return (
-                          <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 md:p-3 min-h-[89px] md:min-h-[105px] group relative" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
-                            <div className="text-sm md:text-base text-foreground line-clamp-6 whitespace-pre-wrap break-words">{cell?.content || ''}</div>
+                          <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-3 min-h-[110px] md:min-h-[105px] group relative" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
+                            <div className="text-base text-foreground line-clamp-6 whitespace-pre-wrap break-words">{cell?.content || ''}</div>
                             {cell?.content && <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
                           </div>
                         );
