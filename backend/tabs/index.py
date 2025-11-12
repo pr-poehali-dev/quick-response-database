@@ -53,7 +53,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    cursor.execute('SELECT id, name, position FROM tabs ORDER BY position')
+    cursor.execute('SELECT DISTINCT ON (position) id, name, position FROM tabs ORDER BY position, id')
     rows = cursor.fetchall()
     
     tabs = []
