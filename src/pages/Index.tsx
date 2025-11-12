@@ -57,7 +57,7 @@ const Index = () => {
         loadCells(activeTab);
       }
     }
-  }, [activeTab]);
+  }, [activeTab, tabs]);
 
   const loadTabs = async () => {
     try {
