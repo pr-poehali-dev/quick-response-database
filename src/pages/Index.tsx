@@ -379,10 +379,27 @@ const Index = () => {
                 </div>
               ) : (
                 <>
+                  {isMobile && (
+                    <div className="flex md:hidden items-center gap-1 bg-card rounded-lg p-1 mb-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                      {Array.from({ length: 10 }, (_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setScrollToColumn(i)}
+                          className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
+                            scrollToColumn === i 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div 
                     className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-8rem)] md:h-auto md:overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
                     ref={(el) => {
-                      if (el && !isMobile) {
+                      if (el) {
                         el.scrollLeft = scrollToColumn * colWidth;
                       }
                     }}
