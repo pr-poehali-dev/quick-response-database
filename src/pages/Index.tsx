@@ -332,10 +332,10 @@ const Index = () => {
   const colWidth = isMobile ? GRID_CONFIG.mobileWidth : GRID_CONFIG.desktopWidth;
 
   return (
-    <div className="min-h-screen bg-background p-2 pb-12 md:pb-2">
+    <div className="min-h-screen bg-background p-2 md:pb-2">
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
-          <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="hidden md:flex items-center justify-between gap-2 mb-2">
             <TabsList className="justify-center md:justify-start overflow-x-auto bg-card h-auto flex-wrap">
               {tabs.map(tab => (
                 <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -363,7 +363,7 @@ const Index = () => {
           </div>
 
           {tabs.map(tab => (
-            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 order-1 md:order-2 flex-1 md:flex-none">
+            <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 flex-1 md:flex-none mb-28 md:mb-0">
               {tab.name === 'Картинки' ? (
                 <div className="space-y-4">
                   <Button onClick={() => document.getElementById('image-upload')?.click()} disabled={uploading}>
@@ -379,25 +379,8 @@ const Index = () => {
                 </div>
               ) : (
                 <>
-                  {isMobile && (
-                    <div className="flex md:hidden items-center gap-1 bg-card rounded-lg p-1 mb-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                      {Array.from({ length: 10 }, (_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setScrollToColumn(i)}
-                          className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
-                            scrollToColumn === i 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                          }`}
-                        >
-                          {i + 1}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                   <div 
-                    className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-8rem)] md:h-auto md:overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+                    className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-16rem)] md:h-auto md:overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
                     ref={(el) => {
                       if (el) {
                         el.scrollLeft = scrollToColumn * colWidth;
@@ -476,6 +459,35 @@ const Index = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {isMobile && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-4 pt-2 px-2 space-y-2">
+          {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
+            <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {Array.from({ length: 10 }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setScrollToColumn(i)}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
+                    scrollToColumn === i 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+          <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
+            {tabs.map(tab => (
+              <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {tab.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+      )}
     </div>
   );
 };
