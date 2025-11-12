@@ -132,38 +132,35 @@ const Index = () => {
   }, [activeTab, tabs]);
 
   const loadTabs = async () => {
-    let retries = 3;
-    while (retries > 0) {
-      try {
-        const response = await fetch('https://functions.poehali.dev/86104f38-169c-4ce4-b077-38f1883a61c5');
-        console.log('Tabs response:', response.status, response.statusText);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Tabs error:', errorText);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
+    try {
+      const response = await fetch('https://functions.poehali.dev/86104f38-169c-4ce4-b077-38f1883a61c5');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      setTabs(data.tabs || []);
+      if (data.tabs && data.tabs.length > 0) {
+        setActiveTab(data.tabs[0].id);
+        localStorage.setItem('tabs_backup', JSON.stringify(data.tabs));
+      }
+    } catch (error) {
+      const savedTabs = localStorage.getItem('tabs_backup');
+      if (savedTabs) {
+        const parsedTabs = JSON.parse(savedTabs);
+        setTabs(parsedTabs);
+        if (parsedTabs.length > 0) {
+          setActiveTab(parsedTabs[0].id);
         }
-        const data = await response.json();
-        console.log('Tabs data:', data);
-        setTabs(data.tabs || []);
-        if (data.tabs && data.tabs.length > 0) {
-          setActiveTab(data.tabs[0].id);
-        }
-        return;
-      } catch (error) {
-        console.error('Fetch error:', error);
-        retries--;
-        if (retries === 0) {
-          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-          if (errorMsg.includes('402')) {
-            toast.error('Требуется оплата сервиса. Свяжитесь с поддержкой.');
-          } else if (errorMsg.includes('Failed to fetch')) {
-            toast.error('Нет связи с сервером. Проверьте интернет-соединение.');
-          } else {
-            toast.error(`Ошибка загрузки вкладок: ${errorMsg}`);
-          }
-        } else {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        toast('Работаем с сохраненными данными', { icon: '💾' });
+      } else {
+        const defaultTabs = [
+          { id: 1, name: 'УПРАЖНЕНИЯ', position: 1 },
+          { id: 2, name: 'Картинки', position: 2 }
+        ];
+        setTabs(defaultTabs);
+        setActiveTab(1);
+        localStorage.setItem('tabs_backup', JSON.stringify(defaultTabs));
+        toast('Работаем в автономном режиме', { icon: '📴' });
       }
     }
   };
