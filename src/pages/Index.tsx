@@ -17,7 +17,7 @@ const GRID_CONFIG = {
   rows: 20,
   cols: 15,
   mobileWidth: 300,
-  desktopWidth: 184
+  desktopWidth: 368
 };
 
 interface LazyImageProps {
