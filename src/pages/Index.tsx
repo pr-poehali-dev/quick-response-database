@@ -372,7 +372,7 @@ const Index = () => {
               ) : (
                 <>
                   <div 
-                    className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-10rem)] md:h-[calc(100vh-8rem)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+                    className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-10rem)] md:h-[calc(100vh-8rem)]" 
                     ref={(el) => {
                       if (el) {
                         el.scrollLeft = scrollToColumn * colWidth;
@@ -380,7 +380,7 @@ const Index = () => {
                     }}
                   >
                     <div className="min-w-max">
-                    <div className="grid gap-[1px] md:gap-[2px] bg-border p-[1px] md:p-[2px]" style={{ gridTemplateColumns: `repeat(${GRID_CONFIG.cols}, ${colWidth}px)` }}>
+                    <div className="grid gap-[1px] md:gap-[2px] bg-border p-[1px] md:p-[2px]" style={{ gridTemplateColumns: `repeat(${GRID_CONFIG.cols}, ${colWidth}px)`, gridTemplateRows: `auto repeat(${GRID_CONFIG.rows}, minmax(105px, auto))` }}>
                       {Array.from({ length: GRID_CONFIG.cols }, (_, i) => (
                         <div key={i} className="bg-muted text-muted-foreground text-base md:text-xs font-medium p-3 md:p-2 text-center cursor-pointer hover:bg-muted/80 transition-colors" onDoubleClick={() => handleColumnDoubleClick(i)}>
                           {columnNames[i] || `УРОК ${i + 1}`}
