@@ -315,7 +315,15 @@ const Index = () => {
                   </div>
                 </div>
               ) : (
-                <div className="border border-border rounded-lg overflow-auto bg-card">
+                <div 
+                  className="border border-border rounded-lg overflow-auto bg-card"
+                  onWheel={(e) => {
+                    if (window.innerWidth >= 768) {
+                      e.preventDefault();
+                      e.currentTarget.scrollLeft += e.deltaY;
+                    }
+                  }}
+                >
                   <div className="min-w-max">
                     <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `repeat(${COLS}, 240px)` }}>
                       {Array.from({ length: COLS }, (_, i) => (
