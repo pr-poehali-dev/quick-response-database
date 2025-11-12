@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, FC } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -6,6 +6,70 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import Icon from '@/components/ui/icon';
+
+interface LazyImageProps {
+  imageId: number;
+  fileName: string;
+  onImageClick: (url: string) => void;
+  onDeleteClick: (e: React.MouseEvent, id: number) => void;
+  loadImageData: (id: number) => Promise<string | null>;
+}
+
+const LazyImage: FC<LazyImageProps> = ({ imageId, fileName, onImageClick, onDeleteClick, loadImageData }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const url = await loadImageData(imageId);
+      setImageUrl(url);
+      setLoading(false);
+    };
+    load();
+  }, [imageId, loadImageData]);
+
+  return (
+    <div
+      className="border border-border rounded-lg overflow-hidden bg-card hover:ring-2 hover:ring-primary transition-all cursor-pointer group"
+      onDoubleClick={() => imageUrl && onImageClick(imageUrl)}
+    >
+      <div className="aspect-square relative">
+        {loading ? (
+          <div className="w-full h-full flex items-center justify-center bg-muted">
+            <Icon name="Loader2" className="animate-spin" size={24} />
+          </div>
+        ) : imageUrl ? (
+          <>
+            <img
+              src={imageUrl}
+              alt={fileName}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+              <Icon name="Copy" size={24} className="text-white" />
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+              onClick={(e) => onDeleteClick(e, imageId)}
+            >
+              <Icon name="Trash2" size={16} />
+            </Button>
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+            <Icon name="ImageOff" size={24} />
+          </div>
+        )}
+      </div>
+      <div className="p-2">
+        <p className="text-xs text-muted-foreground truncate">{fileName}</p>
+      </div>
+    </div>
+  );
+};
 
 interface Cell {
   id?: number;
@@ -24,7 +88,7 @@ interface Tab {
 interface Image {
   id: number;
   file_name: string;
-  file_url: string;
+  file_url: string | null;
   created_at: string;
 }
 
@@ -44,6 +108,7 @@ const Index = () => {
   const [columnNames, setColumnNames] = useState<Record<number, string>>({});
   const [editingColumn, setEditingColumn] = useState<number | null>(null);
   const [editColumnValue, setEditColumnValue] = useState('');
+  const [imageCache, setImageCache] = useState<Record<number, string>>({});
 
   const getCellKey = (tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`;
 
@@ -202,6 +267,26 @@ const Index = () => {
     }
   };
 
+  const loadImageData = useCallback(async (imageId: number) => {
+    if (imageCache[imageId]) {
+      return imageCache[imageId];
+    }
+
+    try {
+      const response = await fetch(`https://functions.poehali.dev/98030051-bc07-464d-98f9-7504adfd39e1?id=${imageId}`);
+      const data = await response.json();
+      
+      if (data.image && data.image.file_url) {
+        setImageCache(prev => ({ ...prev, [imageId]: data.image.file_url }));
+        return data.image.file_url;
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки данных изображения:', error);
+    }
+    
+    return null;
+  }, [imageCache]);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -224,6 +309,10 @@ const Index = () => {
           });
 
           if (response.ok) {
+            const result = await response.json();
+            if (result.image) {
+              setImageCache(prev => ({ ...prev, [result.image.id]: result.image.file_url }));
+            }
             await loadImages();
             toast.success('Изображение загружено!');
           }
@@ -327,33 +416,14 @@ const Index = () => {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {images.map((image) => (
-                      <div
+                      <LazyImage
                         key={image.id}
-                        className="border border-border rounded-lg overflow-hidden bg-card hover:ring-2 hover:ring-primary transition-all cursor-pointer group"
-                        onDoubleClick={() => handleImageClick(image.file_url)}
-                      >
-                        <div className="aspect-square relative">
-                          <img
-                            src={image.file_url}
-                            alt={image.file_name}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                            <Icon name="Copy" size={24} className="text-white" />
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-                            onClick={(e) => handleImageDeleteClick(e, image.id)}
-                          >
-                            <Icon name="Trash2" size={16} />
-                          </Button>
-                        </div>
-                        <div className="p-2">
-                          <p className="text-xs text-muted-foreground truncate">{image.file_name}</p>
-                        </div>
-                      </div>
+                        imageId={image.id}
+                        fileName={image.file_name}
+                        onImageClick={handleImageClick}
+                        onDeleteClick={handleImageDeleteClick}
+                        loadImageData={loadImageData}
+                      />
                     ))}
                   </div>
                 </div>

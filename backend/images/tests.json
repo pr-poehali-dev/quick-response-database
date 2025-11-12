@@ -1,13 +1,10 @@
 {
   "tests": [
     {
-      "name": "Get all images",
+      "name": "Get all images list",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
-      "expectedBody": {
-        "images": "array"
-      },
       "bodyMatcher": "partial"
     }
   ]

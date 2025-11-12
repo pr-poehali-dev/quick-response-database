@@ -1,6 +1,7 @@
 import json
 import os
 import psycopg2
+import psycopg2.extras
 import base64
 import uuid
 from typing import Dict, Any
@@ -28,34 +29,89 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     database_url = os.environ.get('DATABASE_URL')
-    conn = psycopg2.connect(database_url)
-    cursor = conn.cursor()
     
-    if method == 'GET':
-        cursor.execute('SELECT id, file_name, file_url, created_at FROM images ORDER BY created_at DESC')
-        rows = cursor.fetchall()
-        
-        images = []
-        for row in rows:
-            images.append({
-                'id': row[0],
-                'file_name': row[1],
-                'file_url': row[2],
-                'created_at': row[3].isoformat() if row[3] else None
-            })
-        
-        cursor.close()
-        conn.close()
-        
+    try:
+        conn = psycopg2.connect(database_url)
+        conn.autocommit = True
+        cursor = conn.cursor()
+    except Exception as e:
         return {
-            'statusCode': 200,
+            'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'images': images}),
+            'body': json.dumps({'error': f'Database connection failed: {str(e)}'}),
             'isBase64Encoded': False
         }
+    
+    if method == 'GET':
+        params = event.get('queryStringParameters', {})
+        image_id = params.get('id')
+        
+        if image_id:
+            # Получить конкретное изображение с данными
+            cursor.execute(f'SELECT id, file_name, file_url, created_at FROM images WHERE id = {int(image_id)}')
+            row = cursor.fetchone()
+            
+            if not row:
+                cursor.close()
+                conn.close()
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({'error': 'Image not found'}),
+                    'isBase64Encoded': False
+                }
+            
+            image = {
+                'id': row[0],
+                'file_name': row[1],
+                'file_url': row[2],
+                'created_at': row[3].isoformat() if row[3] else None
+            }
+            
+            cursor.close()
+            conn.close()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'image': image}),
+                'isBase64Encoded': False
+            }
+        else:
+            # Получить список всех изображений БЕЗ данных (только метаданные)
+            cursor.execute('SELECT id, file_name, created_at FROM images ORDER BY created_at DESC')
+            rows = cursor.fetchall()
+            
+            images = []
+            for row in rows:
+                images.append({
+                    'id': row[0],
+                    'file_name': row[1],
+                    'file_url': None,  # Не возвращаем данные в списке
+                    'created_at': row[2].isoformat() if row[2] else None
+                })
+            
+            cursor.close()
+            conn.close()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'images': images}),
+                'isBase64Encoded': False
+            }
     
     if method == 'POST':
         body_data = json.loads(event.get('body', '{}'))
@@ -77,13 +133,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         file_url = file_data
         
+        # Используем простой запрос без параметров
+        safe_file_name = file_name.replace("'", "''")
+        safe_file_url = file_url.replace("'", "''")
+        
         cursor.execute(
-            'INSERT INTO images (file_name, file_url) VALUES (%s, %s) RETURNING id, file_name, file_url, created_at',
-            (file_name, file_url)
+            f"INSERT INTO images (file_name, file_url) VALUES ('{safe_file_name}', '{safe_file_url}') RETURNING id, file_name, file_url, created_at"
         )
         
         row = cursor.fetchone()
-        conn.commit()
         
         image = {
             'id': row[0],
@@ -122,8 +180,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        cursor.execute('DELETE FROM images WHERE id = %s', (int(image_id),))
-        conn.commit()
+        # Используем простой запрос без параметров
+        cursor.execute(f"DELETE FROM images WHERE id = {int(image_id)}")
         
         cursor.close()
         conn.close()
