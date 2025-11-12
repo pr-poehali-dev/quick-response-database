@@ -140,12 +140,12 @@ const Index = () => {
     <div className="min-h-screen bg-background p-2">
       <div className="max-w-[100vw] mx-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full">
-          <TabsList className="w-full justify-start overflow-x-auto bg-card mb-2 h-auto flex-wrap md:flex-nowrap">
+          <TabsList className="w-full justify-start overflow-x-auto bg-card mb-2 h-auto flex-wrap">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.id}
                 value={tab.id.toString()}
-                className="text-xs md:text-sm px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 {tab.name}
               </TabsTrigger>
