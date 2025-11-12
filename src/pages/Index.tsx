@@ -159,7 +159,7 @@ const Index = () => {
                   <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `repeat(${COLS}, 120px)` }}>
                     {Array.from({ length: COLS }, (_, i) => (
                       <div key={i} className="bg-muted text-muted-foreground text-xs font-medium p-1 text-center">
-                        {String.fromCharCode(65 + i)}
+                        УРОК {i + 1}
                       </div>
                     ))}
 
