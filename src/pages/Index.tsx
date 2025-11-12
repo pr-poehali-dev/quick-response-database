@@ -20,6 +20,13 @@ interface Tab {
   position: number;
 }
 
+interface Image {
+  id: number;
+  file_name: string;
+  file_url: string;
+  created_at: string;
+}
+
 const ROWS = 20;
 const COLS = 15;
 
@@ -30,6 +37,8 @@ const Index = () => {
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [loading, setLoading] = useState(true);
+  const [images, setImages] = useState<Image[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const getCellKey = (tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`;
 
@@ -39,9 +48,14 @@ const Index = () => {
 
   useEffect(() => {
     if (activeTab) {
-      loadCells(activeTab);
+      const currentTab = tabs.find(t => t.id === activeTab);
+      if (currentTab?.name === 'Картинки') {
+        loadImages();
+      } else {
+        loadCells(activeTab);
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, tabs]);
 
   const loadTabs = async () => {
     try {
@@ -136,6 +150,67 @@ const Index = () => {
     toast.info('Прокрутите вниз для новых строк');
   };
 
+  const loadImages = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('https://functions.poehali.dev/98030051-bc07-464d-98f9-7504adfd39e1');
+      const data = await response.json();
+      setImages(data.images || []);
+    } catch (error) {
+      toast.error('Ошибка загрузки изображений');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    
+    for (const file of Array.from(files)) {
+      try {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const base64Data = event.target?.result as string;
+          
+          const response = await fetch('https://functions.poehali.dev/98030051-bc07-464d-98f9-7504adfd39e1', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              file_name: file.name,
+              file_data: base64Data
+            })
+          });
+
+          if (response.ok) {
+            await loadImages();
+            toast.success('Изображение загружено!');
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        toast.error('Ошибка загрузки изображения');
+      }
+    }
+    
+    setUploading(false);
+    e.target.value = '';
+  };
+
+  const handleImageClick = async (imageUrl: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const item = new ClipboardItem({ [blob.type]: blob });
+      await navigator.clipboard.write([item]);
+      toast.success('Изображение скопировано!');
+    } catch (error) {
+      toast.error('Ошибка копирования изображения');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-2">
       <div className="max-w-[100vw] mx-auto">
@@ -154,43 +229,85 @@ const Index = () => {
 
           {tabs.map((tab) => (
             <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0">
-              <div className="border border-border rounded-lg overflow-auto bg-card">
-                <div className="min-w-max">
-                  <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `repeat(${COLS}, 240px)` }}>
-                    {Array.from({ length: COLS }, (_, i) => (
-                      <div key={i} className="bg-muted text-muted-foreground text-xs font-medium p-2 text-center">
-                        УРОК {i + 1}
+              {tab.name === 'Картинки' ? (
+                <div className="space-y-4">
+                  <div className="flex justify-start">
+                    <Button onClick={() => document.getElementById('image-upload')?.click()} disabled={uploading}>
+                      <Icon name="Upload" size={16} className="mr-2" />
+                      {uploading ? 'Загрузка...' : 'Загрузить'}
+                    </Button>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {images.map((image) => (
+                      <div
+                        key={image.id}
+                        className="border border-border rounded-lg overflow-hidden bg-card hover:ring-2 hover:ring-primary transition-all cursor-pointer group"
+                        onDoubleClick={() => handleImageClick(image.file_url)}
+                      >
+                        <div className="aspect-square relative">
+                          <img
+                            src={image.file_url}
+                            alt={image.file_name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Icon name="Copy" size={24} className="text-white" />
+                          </div>
+                        </div>
+                        <div className="p-2">
+                          <p className="text-xs text-muted-foreground truncate">{image.file_name}</p>
+                        </div>
                       </div>
-                    ))}
-
-                    {Array.from({ length: ROWS }, (_, row) => (
-                      <>
-                        {Array.from({ length: COLS }, (_, col) => {
-                          const key = getCellKey(tab.id, row, col);
-                          const cell = cells[key];
-                          return (
-                            <div
-                              key={`${row}-${col}`}
-                              className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[108px] group relative"
-                              onClick={() => handleCellClick(row, col)}
-                              onDoubleClick={() => handleCellDoubleClick(row, col)}
-                            >
-                              <div className="text-xs text-foreground line-clamp-6 whitespace-pre-wrap break-words">
-                                {cell?.content || ''}
-                              </div>
-                              {cell?.content && (
-                                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Icon name="Copy" size={12} className="text-muted-foreground" />
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </>
                     ))}
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="border border-border rounded-lg overflow-auto bg-card">
+                  <div className="min-w-max">
+                    <div className="grid gap-[1px] bg-border p-[1px]" style={{ gridTemplateColumns: `repeat(${COLS}, 240px)` }}>
+                      {Array.from({ length: COLS }, (_, i) => (
+                        <div key={i} className="bg-muted text-muted-foreground text-xs font-medium p-2 text-center">
+                          УРОК {i + 1}
+                        </div>
+                      ))}
+
+                      {Array.from({ length: ROWS }, (_, row) => (
+                        <>
+                          {Array.from({ length: COLS }, (_, col) => {
+                            const key = getCellKey(tab.id, row, col);
+                            const cell = cells[key];
+                            return (
+                              <div
+                                key={`${row}-${col}`}
+                                className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[108px] group relative"
+                                onClick={() => handleCellClick(row, col)}
+                                onDoubleClick={() => handleCellDoubleClick(row, col)}
+                              >
+                                <div className="text-xs text-foreground line-clamp-6 whitespace-pre-wrap break-words">
+                                  {cell?.content || ''}
+                                </div>
+                                {cell?.content && (
+                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Icon name="Copy" size={12} className="text-muted-foreground" />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </TabsContent>
           ))}
         </Tabs>
