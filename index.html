@@ -35,13 +35,7 @@
 <div id="root"></div>
 <script type="module" src="/src/main.tsx"></script>
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(registration => console.log('SW registered'))
-        .catch(err => console.log('SW registration failed'));
-    });
-  }
+  'serviceWorker' in navigator && navigator.serviceWorker.register('/sw.js');
 </script>
 
 <!-- Yandex.Metrika counter -->

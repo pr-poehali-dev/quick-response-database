@@ -16,7 +16,6 @@ const API_URLS = {
 const GRID_CONFIG = {
   rows: 20,
   cols: 15,
-  mobileWidth: 300,
   desktopWidth: 368
 };
 
@@ -161,22 +160,24 @@ const Index = () => {
 
   const loadCells = async (tabId: number) => {
     try {
-      setLoading(true);
-      const cachedData = localStorage.getItem(`cells_tab_${tabId}`);
-      if (cachedData) {
-        setCells(JSON.parse(cachedData));
+      const cacheKey = `cells_${tabId}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        setCells(JSON.parse(cached));
         setLoading(false);
+      } else {
+        setLoading(true);
       }
-      const response = await fetch(`${API_URLS.cells}?tab_id=${tabId}`);
-      const data = await response.json();
-      const cellsMap: Record<string, Cell> = {};
-      (data.cells || []).forEach((cell: Cell) => {
-        cellsMap[getCellKey(tabId, cell.row_index, cell.col_index)] = cell;
+      const res = await fetch(`${API_URLS.cells}?tab_id=${tabId}`);
+      const data = await res.json();
+      const map: Record<string, Cell> = {};
+      (data.cells || []).forEach((c: Cell) => {
+        map[getCellKey(tabId, c.row_index, c.col_index)] = c;
       });
-      setCells(cellsMap);
-      localStorage.setItem(`cells_tab_${tabId}`, JSON.stringify(cellsMap));
+      setCells(map);
+      localStorage.setItem(cacheKey, JSON.stringify(map));
     } catch {
-      if (!localStorage.getItem(`cells_tab_${tabId}`)) toast.error('Ошибка загрузки данных');
+      !localStorage.getItem(`cells_${tabId}`) && toast.error('Ошибка загрузки');
     } finally {
       setLoading(false);
     }
@@ -198,20 +199,20 @@ const Index = () => {
   const handleSaveCell = async () => {
     if (!editingCell) return;
     try {
-      const response = await fetch(API_URLS.cells, {
+      const res = await fetch(API_URLS.cells, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tab_id: activeTab, row_index: editingCell.row, col_index: editingCell.col, content: editValue }),
       });
-      if (response.ok) {
+      if (res.ok) {
         const key = getCellKey(activeTab, editingCell.row, editingCell.col);
-        const updatedCells = { ...cells, [key]: { tab_id: activeTab, row_index: editingCell.row, col_index: editingCell.col, content: editValue } };
-        setCells(updatedCells);
-        localStorage.setItem(`cells_tab_${activeTab}`, JSON.stringify(updatedCells));
+        const updated = { ...cells, [key]: { tab_id: activeTab, row_index: editingCell.row, col_index: editingCell.col, content: editValue } };
+        setCells(updated);
+        localStorage.setItem(`cells_${activeTab}`, JSON.stringify(updated));
         toast.success('Сохранено!');
       }
     } catch {
-      toast.error('Ошибка сохранения');
+      toast.error('Ошибка');
     } finally {
       setEditingCell(null);
       setEditValue('');
@@ -330,8 +331,7 @@ const Index = () => {
   };
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const mobileColWidth = typeof window !== 'undefined' ? window.innerWidth - 16 : GRID_CONFIG.mobileWidth;
-  const colWidth = isMobile ? mobileColWidth : GRID_CONFIG.desktopWidth;
+  const colWidth = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 16 : 300) : GRID_CONFIG.desktopWidth;
 
   return (
     <div className="min-h-screen bg-background p-2 md:pb-2">
