@@ -99,7 +99,7 @@ const Index = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [uploading, setUploading] = useState(false);
   const [deleteImageId, setDeleteImageId] = useState<number | null>(null);
-  const [columnNames, setColumnNames] = useState<Record<number, string>>({});
+  const [columnNames, setColumnNames] = useState<Record<string, Record<number, string>>>({});
   const [editingColumn, setEditingColumn] = useState<number | null>(null);
   const [editColumnValue, setEditColumnValue] = useState('');
   const [imageCache, setImageCache] = useState<Record<number, string>>({});
@@ -109,7 +109,7 @@ const Index = () => {
 
   useEffect(() => {
     loadTabs();
-    const savedColumns = localStorage.getItem('columnNames');
+    const savedColumns = localStorage.getItem('columnNamesByTab');
     if (savedColumns) setColumnNames(JSON.parse(savedColumns));
   }, []);
 
@@ -210,15 +210,18 @@ const Index = () => {
   };
 
   const handleColumnDoubleClick = (colIndex: number) => {
-    setEditColumnValue(columnNames[colIndex] || `УРОК ${colIndex + 1}`);
+    const tabColumns = columnNames[activeTab] || {};
+    setEditColumnValue(tabColumns[colIndex] || `УРОК ${colIndex + 1}`);
     setEditingColumn(colIndex);
   };
 
   const handleSaveColumnName = () => {
     if (editingColumn === null) return;
-    const newColumnNames = { ...columnNames, [editingColumn]: editColumnValue };
+    const tabColumns = columnNames[activeTab] || {};
+    const updatedTabColumns = { ...tabColumns, [editingColumn]: editColumnValue };
+    const newColumnNames = { ...columnNames, [activeTab]: updatedTabColumns };
     setColumnNames(newColumnNames);
-    localStorage.setItem('columnNames', JSON.stringify(newColumnNames));
+    localStorage.setItem('columnNamesByTab', JSON.stringify(newColumnNames));
     setEditingColumn(null);
     setEditColumnValue('');
     toast.success('Название колонки сохранено!');
@@ -364,11 +367,14 @@ const Index = () => {
                   >
                     <div className="min-w-max">
                     <div className="grid gap-[1px] md:gap-[2px] bg-border p-[1px] md:p-[2px]" style={{ gridTemplateColumns: `repeat(${GRID_CONFIG.cols}, ${colWidth}px)`, gridTemplateRows: `auto repeat(${GRID_CONFIG.rows}, minmax(105px, auto))` }}>
-                      {Array.from({ length: GRID_CONFIG.cols }, (_, i) => (
-                        <div key={i} className="bg-muted text-muted-foreground text-base md:text-xs font-medium p-3 md:p-2 text-center cursor-pointer hover:bg-muted/80 transition-colors" onDoubleClick={() => handleColumnDoubleClick(i)}>
-                          {columnNames[i] || `УРОК ${i + 1}`}
-                        </div>
-                      ))}
+                      {Array.from({ length: GRID_CONFIG.cols }, (_, i) => {
+                        const tabColumns = columnNames[activeTab] || {};
+                        return (
+                          <div key={i} className="bg-muted text-muted-foreground text-base md:text-xs font-medium p-3 md:p-2 text-center cursor-pointer hover:bg-muted/80 transition-colors" onDoubleClick={() => handleColumnDoubleClick(i)}>
+                            {tabColumns[i] || `УРОК ${i + 1}`}
+                          </div>
+                        );
+                      })}
                       {Array.from({ length: GRID_CONFIG.rows * GRID_CONFIG.cols }, (_, idx) => {
                         const row = Math.floor(idx / GRID_CONFIG.cols);
                         const col = idx % GRID_CONFIG.cols;
