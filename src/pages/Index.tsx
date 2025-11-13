@@ -335,23 +335,6 @@ const Index = () => {
                 </TabsTrigger>
               ))}
             </TabsList>
-            {!isMobile && tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-              <div className="flex items-center gap-1 bg-card rounded-lg p-1">
-                {Array.from({ length: 10 }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setScrollToColumn(i)}
-                    className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                      scrollToColumn === i 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {tabs.map(tab => (
