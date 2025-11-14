@@ -327,7 +327,7 @@ const Index = () => {
   const colWidth = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 16 : 300) : GRID_CONFIG.desktopWidth;
 
   return (
-    <div className="min-h-screen bg-background p-2 md:pb-2">
+    <div className="min-h-screen bg-background p-2 md:pb-0">
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
           <div className="hidden md:flex flex-col items-center space-y-2 mb-2">
