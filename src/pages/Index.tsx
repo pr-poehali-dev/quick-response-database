@@ -379,6 +379,7 @@ const Index = () => {
                     ref={(el) => {
                       if (el) {
                         el.scrollLeft = scrollToColumn * colWidth;
+                        el.scrollTop = 0;
                       }
                     }}
                   >
