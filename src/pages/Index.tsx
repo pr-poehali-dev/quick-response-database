@@ -553,22 +553,20 @@ const Index = () => {
                 ))}
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <TabsList className="flex-1 justify-center overflow-x-auto bg-card h-auto flex-wrap">
-                {tabs.map(tab => (
-                  <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    {tab.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+            <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto">
+              {tabs.map(tab => (
+                <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  {tab.name}
+                </TabsTrigger>
+              ))}
               {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-                <div className="flex items-center gap-1 bg-card rounded-lg p-1 border border-border">
+                <>
                   <Button
                     onClick={handleSyncToServer}
                     disabled={syncing}
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 flex-shrink-0"
                     title="Сохранить все изменения на сервер"
                   >
                     <Icon name="CloudUpload" size={16} />
@@ -578,14 +576,14 @@ const Index = () => {
                     disabled={syncing}
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 flex-shrink-0"
                     title="Загрузить данные с сервера"
                   >
                     <Icon name="CloudDownload" size={16} />
                   </Button>
-                </div>
+                </>
               )}
-            </div>
+            </TabsList>
           </div>
         </Tabs>
       </div>
