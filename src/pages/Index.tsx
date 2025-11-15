@@ -206,8 +206,19 @@ const Index = () => {
     toast.success('Название колонки сохранено!');
   };
 
-  const handleExportToExcel = () => {
+  const handleExportToExcel = async () => {
     try {
+      toast.info('Загрузка данных...');
+      
+      const response = await fetch(API_URLS.cells);
+      const data = await response.json();
+      
+      const allCells: Record<string, Cell> = {};
+      (data.cells || []).forEach((cell: Cell) => {
+        const key = getCellKey(cell.tab_id, cell.row_index, cell.col_index);
+        allCells[key] = cell;
+      });
+      
       const workbook = XLSX.utils.book_new();
       
       tabs.forEach(tab => {
@@ -223,7 +234,7 @@ const Index = () => {
           const rowData = [];
           for (let col = 0; col < GRID_CONFIG.cols; col++) {
             const key = getCellKey(tab.id, row, col);
-            const cell = cells[key];
+            const cell = allCells[key];
             const cellText = [cell?.header, cell?.content].filter(Boolean).join('\n');
             rowData.push(cellText || '');
           }
