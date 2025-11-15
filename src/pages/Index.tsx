@@ -110,10 +110,15 @@ const Index = () => {
 
   useEffect(() => {
     loadTabs();
-    loadInitialData();
   }, []);
 
-  const loadInitialData = async () => {
+  useEffect(() => {
+    if (getCellKey) {
+      loadInitialData();
+    }
+  }, [loadInitialData, getCellKey]);
+
+  const loadInitialData = useCallback(async () => {
     try {
       const [cellsResponse, columnsResponse] = await Promise.all([
         fetch(API_URLS.cells),
@@ -147,7 +152,7 @@ const Index = () => {
       const savedColumns = localStorage.getItem('columnNamesByTab');
       if (savedColumns) setColumnNames(JSON.parse(savedColumns));
     }
-  };
+  }, [getCellKey]);
 
   useEffect(() => {
     if (activeTab && tabs.length > 0) {
