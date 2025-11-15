@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import Icon from '@/components/ui/icon';
+import * as XLSX from 'xlsx';
 
 const API_URLS = {
   tabs: 'https://functions.poehali.dev/86104f38-169c-4ce4-b077-38f1883a61c5',
@@ -205,7 +206,40 @@ const Index = () => {
     toast.success('Название колонки сохранено!');
   };
 
-
+  const handleExportToExcel = () => {
+    try {
+      const workbook = XLSX.utils.book_new();
+      
+      tabs.forEach(tab => {
+        const tabColumns = columnNames[tab.id] || {};
+        const sheetData: any[][] = [];
+        
+        const headerRow = Array.from({ length: GRID_CONFIG.cols }, (_, i) => 
+          tabColumns[i] || `УРОК ${i + 1}`
+        );
+        sheetData.push(headerRow);
+        
+        for (let row = 0; row < GRID_CONFIG.rows; row++) {
+          const rowData = [];
+          for (let col = 0; col < GRID_CONFIG.cols; col++) {
+            const key = getCellKey(tab.id, row, col);
+            const cell = cells[key];
+            const cellText = [cell?.header, cell?.content].filter(Boolean).join('\n');
+            rowData.push(cellText || '');
+          }
+          sheetData.push(rowData);
+        }
+        
+        const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+        XLSX.utils.book_append_sheet(workbook, worksheet, tab.name.substring(0, 31));
+      });
+      
+      XLSX.writeFile(workbook, 'данные.xlsx');
+      toast.success('Excel файл загружен!');
+    } catch (error) {
+      toast.error('Ошибка экспорта');
+    }
+  };
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const colWidth = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 16 : 300) : GRID_CONFIG.desktopWidth;
@@ -215,13 +249,19 @@ const Index = () => {
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
           <div className="hidden md:flex flex-col items-center space-y-2 mb-2">
-            <TabsList className="justify-center overflow-x-auto bg-card h-auto flex-wrap">
-              {tabs.map(tab => (
-                <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  {tab.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <div className="flex items-center gap-2 w-full justify-center">
+              <TabsList className="justify-center overflow-x-auto bg-card h-auto flex-wrap">
+                {tabs.map(tab => (
+                  <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    {tab.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              <Button onClick={handleExportToExcel} variant="outline" size="sm" className="flex-shrink-0">
+                <Icon name="Download" size={16} className="mr-2" />
+                Экспорт в Excel
+              </Button>
+            </div>
             <div className="flex items-center gap-1 bg-card rounded-lg p-1">
               {Array.from({ length: 10 }, (_, i) => (
                 <button
