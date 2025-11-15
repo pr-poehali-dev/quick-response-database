@@ -454,14 +454,21 @@ const Index = () => {
                                 localStorage.setItem(`cells_${activeTab}`, JSON.stringify(updated));
                               }}
                               onBlur={async (e) => {
-                                if (cell?.header !== e.target.value) {
+                                const currentHeader = cell?.header || '';
+                                const newHeader = e.target.value;
+                                if (currentHeader !== newHeader) {
                                   try {
-                                    await fetch(API_URLS.cells, {
+                                    console.log('Saving header:', { tab_id: activeTab, row_index: row, col_index: col, header: newHeader });
+                                    const response = await fetch(API_URLS.cells, {
                                       method: 'POST',
                                       headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ tab_id: activeTab, row_index: row, col_index: col, content: cell?.content || '', header: e.target.value }),
+                                      body: JSON.stringify({ tab_id: activeTab, row_index: row, col_index: col, content: cell?.content || '', header: newHeader }),
                                     });
-                                  } catch {}
+                                    const result = await response.json();
+                                    console.log('Header saved:', result);
+                                  } catch (error) {
+                                    console.error('Error saving header:', error);
+                                  }
                                 }
                               }}
                               onClick={(e) => e.stopPropagation()}
