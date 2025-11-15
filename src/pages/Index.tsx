@@ -108,16 +108,6 @@ const Index = () => {
 
   const getCellKey = useCallback((tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`, []);
 
-  useEffect(() => {
-    loadTabs();
-  }, []);
-
-  useEffect(() => {
-    if (getCellKey) {
-      loadInitialData();
-    }
-  }, [loadInitialData, getCellKey]);
-
   const loadInitialData = useCallback(async () => {
     try {
       const [cellsResponse, columnsResponse] = await Promise.all([
@@ -153,6 +143,11 @@ const Index = () => {
       if (savedColumns) setColumnNames(JSON.parse(savedColumns));
     }
   }, [getCellKey]);
+
+  useEffect(() => {
+    loadTabs();
+    loadInitialData();
+  }, [loadInitialData]);
 
   useEffect(() => {
     if (activeTab && tabs.length > 0) {
