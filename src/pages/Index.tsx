@@ -501,14 +501,38 @@ const Index = () => {
 
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-8 pt-2 px-2 space-y-2 z-50">
             {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 justify-center bg-card rounded-lg p-1 border border-border">
+              <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {Array.from({ length: 10 }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setScrollToColumn(i)}
+                    className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
+                      scrollToColumn === i 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <TabsList className="flex-1 justify-center overflow-x-auto bg-card h-auto flex-wrap">
+                {tabs.map(tab => (
+                  <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    {tab.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
+                <div className="flex items-center gap-1 bg-card rounded-lg p-1 border border-border">
                   <Button
                     onClick={handleSyncToServer}
                     disabled={syncing}
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-3"
+                    className="h-8 w-8 p-0"
                     title="Сохранить все изменения на сервер"
                   >
                     <Icon name="CloudUpload" size={16} />
@@ -518,36 +542,14 @@ const Index = () => {
                     disabled={syncing}
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-3"
+                    className="h-8 w-8 p-0"
                     title="Загрузить данные с сервера"
                   >
                     <Icon name="CloudDownload" size={16} />
                   </Button>
                 </div>
-                <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {Array.from({ length: 10 }, (_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setScrollToColumn(i)}
-                      className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
-                        scrollToColumn === i 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
-              {tabs.map(tab => (
-                <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  {tab.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+              )}
+            </div>
           </div>
         </Tabs>
       </div>
