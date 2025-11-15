@@ -105,15 +105,49 @@ const Index = () => {
   const [editColumnValue, setEditColumnValue] = useState('');
   const [imageCache, setImageCache] = useState<Record<number, string>>({});
   const [scrollToColumn, setScrollToColumn] = useState<number>(0);
-  const [syncing, setSyncing] = useState(false);
 
   const getCellKey = useCallback((tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`, []);
 
   useEffect(() => {
     loadTabs();
-    const savedColumns = localStorage.getItem('columnNamesByTab');
-    if (savedColumns) setColumnNames(JSON.parse(savedColumns));
+    loadInitialData();
   }, []);
+
+  const loadInitialData = async () => {
+    try {
+      const [cellsResponse, columnsResponse] = await Promise.all([
+        fetch(API_URLS.cells),
+        fetch(API_URLS.cells + '?action=get_columns')
+      ]);
+
+      if (cellsResponse.ok && columnsResponse.ok) {
+        const cellsData = await cellsResponse.json();
+        const columnsData = await columnsResponse.json();
+
+        const cellsByTab: Record<number, Record<string, Cell>> = {};
+        
+        cellsData.cells.forEach((cell: Cell) => {
+          if (!cellsByTab[cell.tab_id]) {
+            cellsByTab[cell.tab_id] = {};
+          }
+          const key = getCellKey(cell.tab_id, cell.row_index, cell.col_index);
+          cellsByTab[cell.tab_id][key] = cell;
+        });
+
+        for (const [tabId, tabCells] of Object.entries(cellsByTab)) {
+          localStorage.setItem(`cells_${tabId}`, JSON.stringify(tabCells));
+        }
+
+        if (columnsData.columnNames) {
+          setColumnNames(columnsData.columnNames);
+          localStorage.setItem('columnNamesByTab', JSON.stringify(columnsData.columnNames));
+        }
+      }
+    } catch (error) {
+      const savedColumns = localStorage.getItem('columnNamesByTab');
+      if (savedColumns) setColumnNames(JSON.parse(savedColumns));
+    }
+  };
 
   useEffect(() => {
     if (activeTab && tabs.length > 0) {
@@ -287,103 +321,7 @@ const Index = () => {
     e.target.value = '';
   };
 
-  const handleSyncToServer = async () => {
-    setSyncing(true);
-    try {
-      const allCells: any[] = [];
-      
-      for (const tab of tabs) {
-        if (tab.name === 'Картинки') continue;
-        
-        const cacheKey = `cells_${tab.id}`;
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-          const tabCells = JSON.parse(cached);
-          Object.values(tabCells).forEach((cell: any) => {
-            if (cell.content) {
-              allCells.push({
-                tab_id: cell.tab_id,
-                row_index: cell.row_index,
-                col_index: cell.col_index,
-                content: cell.content,
-                header: cell.header || ''
-              });
-            }
-          });
-        }
-      }
 
-      const response = await fetch(API_URLS.cells, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync_all', cells: allCells, columnNames })
-      });
-
-      if (response.ok) {
-        toast.success('Все изменения сохранены на сервер!');
-      } else {
-        const errorText = await response.text();
-        console.error('Sync error:', errorText);
-        toast.error('Ошибка синхронизации');
-      }
-    } catch (error) {
-      console.error('Sync exception:', error);
-      toast.error('Ошибка синхронизации');
-    }
-    setSyncing(false);
-  };
-
-  const handleSyncFromServer = async () => {
-    setSyncing(true);
-    try {
-      const [cellsResponse, columnsResponse] = await Promise.all([
-        fetch(API_URLS.cells),
-        fetch(API_URLS.cells + '?action=get_columns')
-      ]);
-
-      if (cellsResponse.ok && columnsResponse.ok) {
-        const cellsData = await cellsResponse.json();
-        const columnsData = await columnsResponse.json();
-
-        console.log('Loaded cells:', cellsData.cells?.length);
-        console.log('Loaded columns:', columnsData.columnNames);
-
-        const cellsByTab: Record<number, Record<string, Cell>> = {};
-        
-        cellsData.cells.forEach((cell: Cell) => {
-          if (!cellsByTab[cell.tab_id]) {
-            cellsByTab[cell.tab_id] = {};
-          }
-          const key = getCellKey(cell.tab_id, cell.row_index, cell.col_index);
-          cellsByTab[cell.tab_id][key] = cell;
-        });
-
-        for (const [tabId, tabCells] of Object.entries(cellsByTab)) {
-          localStorage.setItem(`cells_${tabId}`, JSON.stringify(tabCells));
-          console.log(`Saved ${Object.keys(tabCells).length} cells for tab ${tabId}`);
-        }
-
-        if (columnsData.columnNames) {
-          setColumnNames(columnsData.columnNames);
-          localStorage.setItem('columnNamesByTab', JSON.stringify(columnsData.columnNames));
-        }
-
-        const currentTabCells = cellsByTab[activeTab] || {};
-        setCells(currentTabCells);
-        console.log(`Set ${Object.keys(currentTabCells).length} cells for current tab ${activeTab}`);
-
-        toast.success(`Данные загружены! Ячеек: ${cellsData.cells?.length || 0}`);
-      } else {
-        const errorText = await cellsResponse.text();
-        console.error('Load error:', errorText);
-        toast.error('Ошибка загрузки данных');
-      }
-    } catch (error) {
-      console.error('Load exception:', error);
-      toast.error('Ошибка загрузки данных');
-    }
-    setSyncing(false);
-  };
 
   const handleImageClick = async (imageUrl: string) => {
     try {
@@ -440,30 +378,7 @@ const Index = () => {
               ))}
             </TabsList>
             {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-card rounded-lg p-1 border border-border">
-                  <Button
-                    onClick={handleSyncToServer}
-                    disabled={syncing}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-3"
-                    title="Сохранить все изменения на сервер"
-                  >
-                    <Icon name="CloudUpload" size={16} />
-                  </Button>
-                  <Button
-                    onClick={handleSyncFromServer}
-                    disabled={syncing}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-3"
-                    title="Загрузить данные с сервера"
-                  >
-                    <Icon name="CloudDownload" size={16} />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-1 bg-card rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-card rounded-lg p-1">
                 {Array.from({ length: 10 }, (_, i) => (
                   <button
                     key={i}
@@ -477,7 +392,6 @@ const Index = () => {
                     {i + 1}
                   </button>
                 ))}
-                </div>
               </div>
             )}
           </div>
@@ -563,40 +477,13 @@ const Index = () => {
           ))}
 
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-8 pt-2 px-2 space-y-2 z-50">
-            <div className="bg-card rounded-lg p-2 space-y-2">
-              <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
-                {tabs.map(tab => (
-                  <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    {tab.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              
-              {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-                <div className="flex items-center gap-2 justify-center">
-                  <Button
-                    onClick={handleSyncToServer}
-                    disabled={syncing}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-3 flex-shrink-0"
-                    title="Сохранить все изменения на сервер"
-                  >
-                    <Icon name="CloudUpload" size={16} />
-                  </Button>
-                  <Button
-                    onClick={handleSyncFromServer}
-                    disabled={syncing}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-3 flex-shrink-0"
-                    title="Загрузить данные с сервера"
-                  >
-                    <Icon name="CloudDownload" size={16} />
-                  </Button>
-                </div>
-              )}
-            </div>
+            <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
+              {tabs.map(tab => (
+                <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  {tab.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             
             {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
               <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
