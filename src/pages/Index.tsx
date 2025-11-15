@@ -1,16 +1,14 @@
-import { useState, useEffect, useCallback, FC, memo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import Icon from '@/components/ui/icon';
 
 const API_URLS = {
   tabs: 'https://functions.poehali.dev/86104f38-169c-4ce4-b077-38f1883a61c5',
-  cells: 'https://functions.poehali.dev/f2f9a3f0-13c8-4862-8b02-aea4ab6b62d4',
-  images: 'https://functions.poehali.dev/98030051-bc07-464d-98f9-7504adfd39e1'
+  cells: 'https://functions.poehali.dev/f2f9a3f0-13c8-4862-8b02-aea4ab6b62d4'
 };
 
 const GRID_CONFIG = {
@@ -19,54 +17,7 @@ const GRID_CONFIG = {
   desktopWidth: 552
 };
 
-interface LazyImageProps {
-  imageId: number;
-  fileName: string;
-  onImageClick: (url: string) => void;
-  onDeleteClick: (e: React.MouseEvent, id: number) => void;
-  loadImageData: (id: number) => Promise<string | null>;
-}
 
-const LazyImage: FC<LazyImageProps> = memo(({ imageId, fileName, onImageClick, onDeleteClick, loadImageData }) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadImageData(imageId).then(url => {
-      setImageUrl(url);
-      setLoading(false);
-    });
-  }, [imageId, loadImageData]);
-
-  return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card hover:ring-2 hover:ring-primary transition-all cursor-pointer group" onDoubleClick={() => imageUrl && onImageClick(imageUrl)}>
-      <div className="aspect-square relative">
-        {loading ? (
-          <div className="w-full h-full flex items-center justify-center bg-muted">
-            <Icon name="Loader2" className="animate-spin" size={24} />
-          </div>
-        ) : imageUrl ? (
-          <>
-            <img src={imageUrl} alt={fileName} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Icon name="Copy" size={24} className="text-white" />
-            </div>
-            <Button size="sm" variant="destructive" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0" onClick={(e) => onDeleteClick(e, imageId)}>
-              <Icon name="Trash2" size={16} />
-            </Button>
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
-            <Icon name="ImageOff" size={24} />
-          </div>
-        )}
-      </div>
-      <div className="p-2">
-        <p className="text-xs text-muted-foreground truncate">{fileName}</p>
-      </div>
-    </div>
-  );
-});
 
 interface Cell {
   id?: number;
@@ -83,12 +34,7 @@ interface Tab {
   position: number;
 }
 
-interface Image {
-  id: number;
-  file_name: string;
-  file_url: string | null;
-  created_at: string;
-}
+
 
 const Index = () => {
   const [tabs, setTabs] = useState<Tab[]>([]);
@@ -97,13 +43,9 @@ const Index = () => {
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [loading, setLoading] = useState(true);
-  const [images, setImages] = useState<Image[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [deleteImageId, setDeleteImageId] = useState<number | null>(null);
   const [columnNames, setColumnNames] = useState<Record<string, Record<number, string>>>({});
   const [editingColumn, setEditingColumn] = useState<number | null>(null);
   const [editColumnValue, setEditColumnValue] = useState('');
-  const [imageCache, setImageCache] = useState<Record<number, string>>({});
   const [scrollToColumn, setScrollToColumn] = useState<number>(0);
 
   const getCellKey = useCallback((tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`, []);
@@ -151,8 +93,7 @@ const Index = () => {
 
   useEffect(() => {
     if (activeTab && tabs.length > 0) {
-      const currentTab = tabs.find(t => t.id === activeTab);
-      currentTab?.name === 'Картинки' ? loadImages() : loadCells(activeTab);
+      loadCells(activeTab);
       setScrollToColumn(0);
     }
   }, [activeTab, tabs]);
@@ -264,103 +205,7 @@ const Index = () => {
     toast.success('Название колонки сохранено!');
   };
 
-  const loadImages = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(API_URLS.images);
-      const data = await response.json();
-      setImages(data.images || []);
-    } catch {
-      setImages([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const loadImageData = useCallback(async (imageId: number) => {
-    if (imageCache[imageId]) return imageCache[imageId];
-    try {
-      const response = await fetch(`${API_URLS.images}?id=${imageId}`);
-      const data = await response.json();
-      if (data.image?.file_url) {
-        setImageCache(prev => ({ ...prev, [imageId]: data.image.file_url }));
-        return data.image.file_url;
-      }
-    } catch (error) {
-      console.error('Ошибка загрузки изображения:', error);
-    }
-    return null;
-  }, [imageCache]);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-    setUploading(true);
-    for (const file of Array.from(files)) {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const response = await fetch(API_URLS.images, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_name: file.name, file_data: event.target?.result })
-          });
-          if (response.ok) {
-            const result = await response.json();
-            if (result.image) setImageCache(prev => ({ ...prev, [result.image.id]: result.image.file_url }));
-            await loadImages();
-            toast.success('Изображение загружено!');
-          }
-        } catch {
-          toast.error('Ошибка загрузки');
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-    setUploading(false);
-    e.target.value = '';
-  };
-
-
-
-  const handleImageClick = async (imageUrl: string) => {
-    try {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = imageUrl;
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext('2d')?.drawImage(img, 0, 0);
-      canvas.toBlob(async (blob) => {
-        if (blob) {
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-          toast.success('Изображение скопировано!');
-        }
-      }, 'image/png');
-    } catch {
-      toast.error('Ошибка копирования');
-    }
-  };
-
-  const handleImageDeleteConfirm = async () => {
-    if (!deleteImageId) return;
-    try {
-      const response = await fetch(`${API_URLS.images}?id=${deleteImageId}`, { method: 'DELETE' });
-      if (response.ok) {
-        setImages(prev => prev.filter(img => img.id !== deleteImageId));
-        toast.success('Изображение удалено!');
-      }
-    } catch {
-      toast.error('Ошибка удаления');
-    } finally {
-      setDeleteImageId(null);
-    }
-  };
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const colWidth = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 16 : 300) : GRID_CONFIG.desktopWidth;
@@ -377,107 +222,88 @@ const Index = () => {
                 </TabsTrigger>
               ))}
             </TabsList>
-            {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-              <div className="flex items-center gap-1 bg-card rounded-lg p-1">
-                {Array.from({ length: 10 }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setScrollToColumn(i)}
-                    className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                      scrollToColumn === i 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-1 bg-card rounded-lg p-1">
+              {Array.from({ length: 10 }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setScrollToColumn(i)}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                    scrollToColumn === i 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
           </div>
 
           {tabs.map(tab => (
             <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 flex-1 md:flex-none mb-[140px] md:mb-0">
-              {tab.name === 'Картинки' ? (
-                <div className="space-y-4">
-                  <Button onClick={() => document.getElementById('image-upload')?.click()} disabled={uploading}>
-                    <Icon name="Upload" size={16} className="mr-2" />
-                    {uploading ? 'Загрузка...' : 'Загрузить'}
-                  </Button>
-                  <input id="image-upload" type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {images.map(image => (
-                      <LazyImage key={image.id} imageId={image.id} fileName={image.file_name} onImageClick={handleImageClick} onDeleteClick={(e, id) => { e.stopPropagation(); setDeleteImageId(id); }} loadImageData={loadImageData} />
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div 
-                    className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-10rem)] md:h-[calc(100vh-10rem)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
-                    ref={(el) => {
-                      if (el) {
-                        el.scrollLeft = scrollToColumn * colWidth;
-                        el.scrollTop = 0;
-                      }
-                    }}
-                  >
-                    <div className="min-w-max">
-                    <div className="grid gap-[1px] md:gap-[2px] bg-border p-[1px] md:p-[2px]" style={{ gridTemplateColumns: `repeat(${GRID_CONFIG.cols}, ${colWidth}px)`, gridTemplateRows: `auto repeat(${GRID_CONFIG.rows}, minmax(105px, auto))` }}>
-                      {Array.from({ length: GRID_CONFIG.cols }, (_, i) => {
-                        const tabColumns = columnNames[activeTab] || {};
-                        return (
-                          <div key={i} className="bg-muted text-muted-foreground text-base md:text-xs font-medium p-3 md:p-2 text-center cursor-pointer hover:bg-muted/80 transition-colors" onDoubleClick={() => handleColumnDoubleClick(i)}>
-                            {tabColumns[i] || `УРОК ${i + 1}`}
-                          </div>
-                        );
-                      })}
-                      {Array.from({ length: GRID_CONFIG.rows * GRID_CONFIG.cols }, (_, idx) => {
-                        const row = Math.floor(idx / GRID_CONFIG.cols);
-                        const col = idx % GRID_CONFIG.cols;
-                        const key = getCellKey(tab.id, row, col);
-                        const cell = cells[key];
-                        return (
-                          <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[110px] md:min-h-[105px] group relative flex flex-col" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
-                            <input
-                              type="text"
-                              value={cell?.header || ''}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                const updated = { ...cells, [key]: { ...cell, tab_id: tab.id, row_index: row, col_index: col, content: cell?.content || '', header: e.target.value } };
-                                setCells(updated);
-                                localStorage.setItem(`cells_${activeTab}`, JSON.stringify(updated));
-                              }}
-                              onBlur={async () => {
-                                const currentCell = cells[key];
-                                const newHeader = currentCell?.header || '';
-                                try {
-                                  console.log('Saving header:', { tab_id: activeTab, row_index: row, col_index: col, header: newHeader, content: currentCell?.content || '' });
-                                  const response = await fetch(API_URLS.cells, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ tab_id: activeTab, row_index: row, col_index: col, content: currentCell?.content || '', header: newHeader }),
-                                  });
-                                  const result = await response.json();
-                                  console.log('Header saved:', result);
-                                } catch (error) {
-                                  console.error('Error saving header:', error);
-                                }
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-lg text-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-1 mb-2 placeholder:text-foreground/50 uppercase font-medium"
-                              placeholder="заголовок..."
-                            />
-                            <div className="text-sm text-foreground/60 line-clamp-5 whitespace-pre-wrap break-words flex-1">{cell?.content || ''}</div>
-                            {cell?.content && <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
-                          </div>
-                        );
-                      })}
+              <div 
+                className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-10rem)] md:h-[calc(100vh-10rem)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+                ref={(el) => {
+                  if (el) {
+                    el.scrollLeft = scrollToColumn * colWidth;
+                    el.scrollTop = 0;
+                  }
+                }}
+              >
+                <div className="min-w-max">
+                  <div className="grid gap-[1px] md:gap-[2px] bg-border p-[1px] md:p-[2px]" style={{ gridTemplateColumns: `repeat(${GRID_CONFIG.cols}, ${colWidth}px)`, gridTemplateRows: `auto repeat(${GRID_CONFIG.rows}, minmax(105px, auto))` }}>
+                    {Array.from({ length: GRID_CONFIG.cols }, (_, i) => {
+                      const tabColumns = columnNames[activeTab] || {};
+                      return (
+                        <div key={i} className="bg-muted text-muted-foreground text-base md:text-xs font-medium p-3 md:p-2 text-center cursor-pointer hover:bg-muted/80 transition-colors" onDoubleClick={() => handleColumnDoubleClick(i)}>
+                          {tabColumns[i] || `УРОК ${i + 1}`}
+                        </div>
+                      );
+                    })}
+                    {Array.from({ length: GRID_CONFIG.rows * GRID_CONFIG.cols }, (_, idx) => {
+                      const row = Math.floor(idx / GRID_CONFIG.cols);
+                      const col = idx % GRID_CONFIG.cols;
+                      const key = getCellKey(tab.id, row, col);
+                      const cell = cells[key];
+                      return (
+                        <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[110px] md:min-h-[105px] group relative flex flex-col" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
+                          <input
+                            type="text"
+                            value={cell?.header || ''}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              const updated = { ...cells, [key]: { ...cell, tab_id: tab.id, row_index: row, col_index: col, content: cell?.content || '', header: e.target.value } };
+                              setCells(updated);
+                              localStorage.setItem(`cells_${activeTab}`, JSON.stringify(updated));
+                            }}
+                            onBlur={async () => {
+                              const currentCell = cells[key];
+                              const newHeader = currentCell?.header || '';
+                              try {
+                                console.log('Saving header:', { tab_id: activeTab, row_index: row, col_index: col, header: newHeader, content: currentCell?.content || '' });
+                                const response = await fetch(API_URLS.cells, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ tab_id: activeTab, row_index: row, col_index: col, content: currentCell?.content || '', header: newHeader }),
+                                });
+                                const result = await response.json();
+                                console.log('Header saved:', result);
+                              } catch (error) {
+                                console.error('Error saving header:', error);
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-lg text-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-1 mb-2 placeholder:text-foreground/50 uppercase font-medium"
+                            placeholder="заголовок..."
+                          />
+                          <div className="text-sm text-foreground/60 line-clamp-5 whitespace-pre-wrap break-words flex-1">{cell?.content || ''}</div>
+                          {cell?.content && <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
+                        </div>
+                      );
+                    })}
                     </div>
                   </div>
                 </div>
-                </>
-              )}
             </TabsContent>
           ))}
 
@@ -490,23 +316,21 @@ const Index = () => {
               ))}
             </TabsList>
             
-            {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-              <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {Array.from({ length: 10 }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setScrollToColumn(i)}
-                    className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
-                      scrollToColumn === i 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {Array.from({ length: 10 }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setScrollToColumn(i)}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
+                    scrollToColumn === i 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
           </div>
         </Tabs>
       </div>
@@ -521,19 +345,6 @@ const Index = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      <AlertDialog open={deleteImageId !== null} onOpenChange={(open) => !open && setDeleteImageId(null)}>
-        <AlertDialogContent className="bg-card">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить изображение?</AlertDialogTitle>
-            <AlertDialogDescription>Это действие нельзя отменить.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteImageId(null)}>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={handleImageDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Удалить</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <Dialog open={editingColumn !== null} onOpenChange={(open) => !open && setEditingColumn(null)}>
         <DialogContent className="bg-card">
