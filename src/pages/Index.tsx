@@ -88,6 +88,56 @@ const Index = () => {
 
   const getCellKey = useCallback((tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`, []);
 
+  const loadCells = useCallback(async (tabId: number) => {
+    try {
+      const cacheKey = `cells_${tabId}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        setCells(JSON.parse(cached));
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+      const res = await fetch(`${API_URLS.cells}?tab_id=${tabId}`);
+      const data = await res.json();
+      const map: Record<string, Cell> = {};
+      (data.cells || []).forEach((c: Cell) => {
+        map[getCellKey(tabId, c.row_index, c.col_index)] = c;
+      });
+      setCells(map);
+      localStorage.setItem(cacheKey, JSON.stringify(map));
+    } catch {
+      !localStorage.getItem(`cells_${tabId}`) && toast.error('Ошибка загрузки');
+    } finally {
+      setLoading(false);
+    }
+  }, [getCellKey]);
+
+  const loadTabs = useCallback(async () => {
+    try {
+      const response = await fetch(API_URLS.tabs);
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      setTabs(data.tabs || []);
+      if (data.tabs?.length > 0) {
+        setActiveTab(data.tabs[0].id);
+        localStorage.setItem('tabs_backup', JSON.stringify(data.tabs));
+      }
+    } catch {
+      const savedTabs = localStorage.getItem('tabs_backup');
+      if (savedTabs) {
+        const parsedTabs = JSON.parse(savedTabs);
+        setTabs(parsedTabs);
+        if (parsedTabs.length > 0) setActiveTab(parsedTabs[0].id);
+      } else {
+        const defaultTabs = [{ id: 1, name: 'УПРАЖНЕНИЯ', position: 1 }, { id: 2, name: 'Картинки', position: 2 }];
+        setTabs(defaultTabs);
+        setActiveTab(1);
+        localStorage.setItem('tabs_backup', JSON.stringify(defaultTabs));
+      }
+    }
+  }, []);
+
   const loadInitialData = useCallback(async () => {
     try {
       const [cellsResponse, columnsResponse] = await Promise.all([
@@ -124,60 +174,10 @@ const Index = () => {
     }
   }, [getCellKey]);
 
-  const loadCells = useCallback(async (tabId: number) => {
-    try {
-      const cacheKey = `cells_${tabId}`;
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        setCells(JSON.parse(cached));
-        setLoading(false);
-      } else {
-        setLoading(true);
-      }
-      const res = await fetch(`${API_URLS.cells}?tab_id=${tabId}`);
-      const data = await res.json();
-      const map: Record<string, Cell> = {};
-      (data.cells || []).forEach((c: Cell) => {
-        map[getCellKey(tabId, c.row_index, c.col_index)] = c;
-      });
-      setCells(map);
-      localStorage.setItem(cacheKey, JSON.stringify(map));
-    } catch {
-      !localStorage.getItem(`cells_${tabId}`) && toast.error('Ошибка загрузки');
-    } finally {
-      setLoading(false);
-    }
-  }, [getCellKey]);
-
-  const loadTabs = async () => {
-    try {
-      const response = await fetch(API_URLS.tabs);
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      setTabs(data.tabs || []);
-      if (data.tabs?.length > 0) {
-        setActiveTab(data.tabs[0].id);
-        localStorage.setItem('tabs_backup', JSON.stringify(data.tabs));
-      }
-    } catch {
-      const savedTabs = localStorage.getItem('tabs_backup');
-      if (savedTabs) {
-        const parsedTabs = JSON.parse(savedTabs);
-        setTabs(parsedTabs);
-        if (parsedTabs.length > 0) setActiveTab(parsedTabs[0].id);
-      } else {
-        const defaultTabs = [{ id: 1, name: 'УПРАЖНЕНИЯ', position: 1 }, { id: 2, name: 'Картинки', position: 2 }];
-        setTabs(defaultTabs);
-        setActiveTab(1);
-        localStorage.setItem('tabs_backup', JSON.stringify(defaultTabs));
-      }
-    }
-  };
-
   useEffect(() => {
     loadTabs();
     loadInitialData();
-  }, [loadInitialData]);
+  }, [loadTabs, loadInitialData]);
 
   useEffect(() => {
     if (activeTab && tabs.length > 0) {
