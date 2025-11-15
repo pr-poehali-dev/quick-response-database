@@ -460,10 +460,10 @@ const Index = () => {
                                 }
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-[9px] text-muted-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-0.5 mb-1.5 placeholder:text-muted-foreground/50"
+                              className="text-lg text-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-1 mb-2 placeholder:text-foreground/50 uppercase font-medium"
                               placeholder="заголовок..."
                             />
-                            <div className="text-base text-foreground line-clamp-5 whitespace-pre-wrap break-words flex-1">{cell?.content || ''}</div>
+                            <div className="text-sm text-foreground/60 line-clamp-5 whitespace-pre-wrap break-words flex-1">{cell?.content || ''}</div>
                             {cell?.content && <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
                           </div>
                         );
