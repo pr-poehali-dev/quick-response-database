@@ -124,17 +124,30 @@ const Index = () => {
     }
   }, [getCellKey]);
 
-  useEffect(() => {
-    loadTabs();
-    loadInitialData();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab && tabs.length > 0) {
-      loadCells(activeTab);
-      setScrollToColumn(0);
+  const loadCells = useCallback(async (tabId: number) => {
+    try {
+      const cacheKey = `cells_${tabId}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        setCells(JSON.parse(cached));
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+      const res = await fetch(`${API_URLS.cells}?tab_id=${tabId}`);
+      const data = await res.json();
+      const map: Record<string, Cell> = {};
+      (data.cells || []).forEach((c: Cell) => {
+        map[getCellKey(tabId, c.row_index, c.col_index)] = c;
+      });
+      setCells(map);
+      localStorage.setItem(cacheKey, JSON.stringify(map));
+    } catch {
+      !localStorage.getItem(`cells_${tabId}`) && toast.error('Ошибка загрузки');
+    } finally {
+      setLoading(false);
     }
-  }, [activeTab, tabs.length, loadCells]);
+  }, [getCellKey]);
 
   const loadTabs = async () => {
     try {
@@ -161,30 +174,17 @@ const Index = () => {
     }
   };
 
-  const loadCells = useCallback(async (tabId: number) => {
-    try {
-      const cacheKey = `cells_${tabId}`;
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        setCells(JSON.parse(cached));
-        setLoading(false);
-      } else {
-        setLoading(true);
-      }
-      const res = await fetch(`${API_URLS.cells}?tab_id=${tabId}`);
-      const data = await res.json();
-      const map: Record<string, Cell> = {};
-      (data.cells || []).forEach((c: Cell) => {
-        map[getCellKey(tabId, c.row_index, c.col_index)] = c;
-      });
-      setCells(map);
-      localStorage.setItem(cacheKey, JSON.stringify(map));
-    } catch {
-      !localStorage.getItem(`cells_${tabId}`) && toast.error('Ошибка загрузки');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    loadTabs();
+    loadInitialData();
+  }, [loadInitialData]);
+
+  useEffect(() => {
+    if (activeTab && tabs.length > 0) {
+      loadCells(activeTab);
+      setScrollToColumn(0);
     }
-  }, [getCellKey]);
+  }, [activeTab, tabs.length, loadCells]);
 
   const handleCellClick = useCallback((row: number, col: number) => {
     const content = cells[getCellKey(activeTab, row, col)]?.content;
