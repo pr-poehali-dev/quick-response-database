@@ -174,18 +174,6 @@ const Index = () => {
     }
   }, [getCellKey]);
 
-  useEffect(() => {
-    loadTabs();
-    loadInitialData();
-  }, [loadTabs, loadInitialData]);
-
-  useEffect(() => {
-    if (activeTab && tabs.length > 0) {
-      loadCells(activeTab);
-      setScrollToColumn(0);
-    }
-  }, [activeTab, tabs.length, loadCells]);
-
   const handleCellClick = useCallback((row: number, col: number) => {
     const content = cells[getCellKey(activeTab, row, col)]?.content;
     if (content) {
@@ -327,6 +315,18 @@ const Index = () => {
 
   const isMobile = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 768, []);
   const colWidth = useMemo(() => isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 16 : 300) : GRID_CONFIG.desktopWidth, [isMobile]);
+
+  useEffect(() => {
+    loadTabs();
+    loadInitialData();
+  }, [loadTabs, loadInitialData]);
+
+  useEffect(() => {
+    if (activeTab && tabs.length > 0) {
+      loadCells(activeTab);
+      setScrollToColumn(0);
+    }
+  }, [activeTab, tabs.length, loadCells]);
 
   return (
     <div className="min-h-screen bg-background p-2 md:pb-0">
