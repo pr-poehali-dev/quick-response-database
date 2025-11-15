@@ -74,6 +74,7 @@ const CellComponent = memo(function CellComponent({ cellKey, cell, row, col, tab
 });
 
 const Index = () => {
+  // v2: Fixed hook initialization order
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTab, setActiveTab] = useState<number>(1);
   const [cells, setCells] = useState<Record<string, Cell>>({});
