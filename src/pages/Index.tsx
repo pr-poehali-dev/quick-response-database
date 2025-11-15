@@ -288,17 +288,32 @@ const Index = () => {
   const handleSyncToServer = async () => {
     setSyncing(true);
     try {
-      const cellsToSync = Object.entries(cells).map(([key, cell]) => ({
-        tab_id: cell.tab_id,
-        row_index: cell.row_index,
-        col_index: cell.col_index,
-        content: cell.content
-      }));
+      const allCells: Cell[] = [];
+      
+      for (const tab of tabs) {
+        if (tab.name === 'Картинки') continue;
+        
+        const cacheKey = `cells_${tab.id}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const tabCells = JSON.parse(cached);
+          Object.values(tabCells).forEach((cell: any) => {
+            if (cell.content) {
+              allCells.push({
+                tab_id: cell.tab_id,
+                row_index: cell.row_index,
+                col_index: cell.col_index,
+                content: cell.content
+              });
+            }
+          });
+        }
+      }
 
       const response = await fetch(API_URLS.cells, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync_all', cells: cellsToSync, columnNames })
+        body: JSON.stringify({ action: 'sync_all', cells: allCells, columnNames })
       });
 
       if (response.ok) {
@@ -324,12 +339,22 @@ const Index = () => {
         const cellsData = await cellsResponse.json();
         const columnsData = await columnsResponse.json();
 
-        const cellsMap: Record<string, Cell> = {};
+        const cellsByTab: Record<number, Record<string, Cell>> = {};
+        
         cellsData.cells.forEach((cell: Cell) => {
+          if (!cellsByTab[cell.tab_id]) {
+            cellsByTab[cell.tab_id] = {};
+          }
           const key = getCellKey(cell.tab_id, cell.row_index, cell.col_index);
-          cellsMap[key] = cell;
+          cellsByTab[cell.tab_id][key] = cell;
         });
-        setCells(cellsMap);
+
+        for (const [tabId, tabCells] of Object.entries(cellsByTab)) {
+          localStorage.setItem(`cells_${tabId}`, JSON.stringify(tabCells));
+        }
+
+        const currentTabCells = cellsByTab[activeTab] || {};
+        setCells(currentTabCells);
 
         if (columnsData.columnNames) {
           setColumnNames(columnsData.columnNames);
