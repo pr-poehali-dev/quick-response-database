@@ -536,20 +536,23 @@ const Index = () => {
           ))}
 
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-8 pt-2 px-2 space-y-2 z-50">
-            <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto">
-              {tabs.map(tab => (
-                <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  {tab.name}
-                </TabsTrigger>
-              ))}
+            <div className="bg-card rounded-lg p-2 space-y-2">
+              <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
+                {tabs.map(tab => (
+                  <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    {tab.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              
               {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-                <>
+                <div className="flex items-center gap-2 justify-center">
                   <Button
                     onClick={handleSyncToServer}
                     disabled={syncing}
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 flex-shrink-0"
+                    className="h-8 px-3 flex-shrink-0"
                     title="Сохранить все изменения на сервер"
                   >
                     <Icon name="CloudUpload" size={16} />
@@ -559,14 +562,15 @@ const Index = () => {
                     disabled={syncing}
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 flex-shrink-0"
+                    className="h-8 px-3 flex-shrink-0"
                     title="Загрузить данные с сервера"
                   >
                     <Icon name="CloudDownload" size={16} />
                   </Button>
-                </>
+                </div>
               )}
-            </TabsList>
+            </div>
+            
             {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
               <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {Array.from({ length: 10 }, (_, i) => (
