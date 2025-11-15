@@ -74,7 +74,6 @@ const CellComponent = memo(function CellComponent({ cellKey, cell, row, col, tab
 });
 
 const Index = () => {
-  // v2: Fixed hook initialization order
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTab, setActiveTab] = useState<number>(1);
   const [cells, setCells] = useState<Record<string, Cell>>({});
@@ -314,9 +313,6 @@ const Index = () => {
     }
   };
 
-  const isMobile = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 768, []);
-  const colWidth = useMemo(() => isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 16 : 300) : GRID_CONFIG.desktopWidth, [isMobile]);
-
   useEffect(() => {
     loadTabs();
     loadInitialData();
@@ -328,6 +324,9 @@ const Index = () => {
       setScrollToColumn(0);
     }
   }, [activeTab, tabs.length, loadCells]);
+
+  const isMobile = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 768, []);
+  const colWidth = useMemo(() => isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 16 : 300) : GRID_CONFIG.desktopWidth, [isMobile]);
 
   return (
     <div className="min-h-screen bg-background p-2 md:pb-0">
