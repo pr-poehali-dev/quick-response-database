@@ -76,10 +76,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         tab_id = params.get('tab_id')
         
         if not tab_id:
-            cursor.execute('SELECT id, tab_id, row_index, col_index, content FROM cells')
+            cursor.execute('SELECT id, tab_id, row_index, col_index, content, header FROM cells')
         else:
             cursor.execute(
-                f'SELECT id, tab_id, row_index, col_index, content FROM cells WHERE tab_id = {int(tab_id)}'
+                f'SELECT id, tab_id, row_index, col_index, content, header FROM cells WHERE tab_id = {int(tab_id)}'
             )
         
         rows = cursor.fetchall()
@@ -91,7 +91,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'tab_id': row[1],
                 'row_index': row[2],
                 'col_index': row[3],
-                'content': row[4]
+                'content': row[4],
+                'header': row[5] or ''
             })
         
         cursor.close()
@@ -121,10 +122,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             for cell in cells_data:
                 if cell.get('content'):
                     safe_content = cell['content'].replace("'", "''")
+                    safe_header = cell.get('header', '').replace("'", "''")
                     cursor.execute(
                         f'''
-                        INSERT INTO cells (tab_id, row_index, col_index, content, updated_at)
-                        VALUES ({int(cell['tab_id'])}, {int(cell['row_index'])}, {int(cell['col_index'])}, '{safe_content}', CURRENT_TIMESTAMP)
+                        INSERT INTO cells (tab_id, row_index, col_index, content, header, updated_at)
+                        VALUES ({int(cell['tab_id'])}, {int(cell['row_index'])}, {int(cell['col_index'])}, '{safe_content}', '{safe_header}', CURRENT_TIMESTAMP)
                         '''
                     )
             
@@ -156,6 +158,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         row_index = body_data.get('row_index')
         col_index = body_data.get('col_index')
         content = body_data.get('content', '')
+        header = body_data.get('header', '')
         
         if tab_id is None or row_index is None or col_index is None:
             cursor.close()
@@ -171,14 +174,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         safe_content = content.replace("'", "''")
+        safe_header = header.replace("'", "''")
         
         cursor.execute(
             f'''
-            INSERT INTO cells (tab_id, row_index, col_index, content, updated_at)
-            VALUES ({int(tab_id)}, {int(row_index)}, {int(col_index)}, '{safe_content}', CURRENT_TIMESTAMP)
+            INSERT INTO cells (tab_id, row_index, col_index, content, header, updated_at)
+            VALUES ({int(tab_id)}, {int(row_index)}, {int(col_index)}, '{safe_content}', '{safe_header}', CURRENT_TIMESTAMP)
             ON CONFLICT (tab_id, row_index, col_index)
-            DO UPDATE SET content = EXCLUDED.content, updated_at = CURRENT_TIMESTAMP
-            RETURNING id, tab_id, row_index, col_index, content
+            DO UPDATE SET content = EXCLUDED.content, header = EXCLUDED.header, updated_at = CURRENT_TIMESTAMP
+            RETURNING id, tab_id, row_index, col_index, content, header
             '''
         )
         
@@ -189,7 +193,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'tab_id': row[1],
             'row_index': row[2],
             'col_index': row[3],
-            'content': row[4]
+            'content': row[4],
+            'header': row[5] or ''
         }
         
         cursor.close()

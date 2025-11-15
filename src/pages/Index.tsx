@@ -74,6 +74,7 @@ interface Cell {
   row_index: number;
   col_index: number;
   content: string;
+  header?: string;
 }
 
 interface Tab {
@@ -190,14 +191,15 @@ const Index = () => {
   const handleSaveCell = async () => {
     if (!editingCell) return;
     try {
+      const key = getCellKey(activeTab, editingCell.row, editingCell.col);
+      const currentCell = cells[key];
       const res = await fetch(API_URLS.cells, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tab_id: activeTab, row_index: editingCell.row, col_index: editingCell.col, content: editValue }),
+        body: JSON.stringify({ tab_id: activeTab, row_index: editingCell.row, col_index: editingCell.col, content: editValue, header: currentCell?.header || '' }),
       });
       if (res.ok) {
-        const key = getCellKey(activeTab, editingCell.row, editingCell.col);
-        const updated = { ...cells, [key]: { tab_id: activeTab, row_index: editingCell.row, col_index: editingCell.col, content: editValue } };
+        const updated = { ...cells, [key]: { tab_id: activeTab, row_index: editingCell.row, col_index: editingCell.col, content: editValue, header: currentCell?.header || '' } };
         setCells(updated);
         localStorage.setItem(`cells_${activeTab}`, JSON.stringify(updated));
         toast.success('Сохранено!');
@@ -303,7 +305,8 @@ const Index = () => {
                 tab_id: cell.tab_id,
                 row_index: cell.row_index,
                 col_index: cell.col_index,
-                content: cell.content
+                content: cell.content,
+                header: cell.header || ''
               });
             }
           });
@@ -521,9 +524,33 @@ const Index = () => {
                         const key = getCellKey(tab.id, row, col);
                         const cell = cells[key];
                         return (
-                          <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-3 min-h-[110px] md:min-h-[105px] group relative" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
-                            <div className="text-base text-foreground line-clamp-6 whitespace-pre-wrap break-words">{cell?.content || ''}</div>
-                            {cell?.content && <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
+                          <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[110px] md:min-h-[105px] group relative flex flex-col" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
+                            <input
+                              type="text"
+                              value={cell?.header || ''}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                const updated = { ...cells, [key]: { ...cell, tab_id: tab.id, row_index: row, col_index: col, content: cell?.content || '', header: e.target.value } };
+                                setCells(updated);
+                                localStorage.setItem(`cells_${activeTab}`, JSON.stringify(updated));
+                              }}
+                              onBlur={async (e) => {
+                                if (cell?.header !== e.target.value) {
+                                  try {
+                                    await fetch(API_URLS.cells, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ tab_id: activeTab, row_index: row, col_index: col, content: cell?.content || '', header: e.target.value }),
+                                    });
+                                  } catch {}
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-[9px] text-muted-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-0.5 mb-1.5 placeholder:text-muted-foreground/50"
+                              placeholder="заголовок..."
+                            />
+                            <div className="text-base text-foreground line-clamp-5 whitespace-pre-wrap break-words flex-1">{cell?.content || ''}</div>
+                            {cell?.content && <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
                           </div>
                         );
                       })}
