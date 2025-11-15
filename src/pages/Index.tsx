@@ -293,7 +293,7 @@ const Index = () => {
                               }
                             }}
                             onClick={(e) => e.stopPropagation()}
-                            className="text-lg text-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-1 mb-2 placeholder:text-foreground/50 uppercase font-medium"
+                            className="text-lg text-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-1 mb-2 placeholder:text-foreground/10 uppercase font-medium"
                             placeholder="заголовок..."
                           />
                           <div className="text-sm text-foreground/60 line-clamp-5 whitespace-pre-wrap break-words flex-1">{cell?.content || ''}</div>
