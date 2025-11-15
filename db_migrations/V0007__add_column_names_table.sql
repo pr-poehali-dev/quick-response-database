@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS column_names (
+    id SERIAL PRIMARY KEY,
+    tab_id INTEGER NOT NULL,
+    col_index INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tab_id, col_index)
+);

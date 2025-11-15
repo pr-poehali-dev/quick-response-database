@@ -104,6 +104,7 @@ const Index = () => {
   const [editColumnValue, setEditColumnValue] = useState('');
   const [imageCache, setImageCache] = useState<Record<number, string>>({});
   const [scrollToColumn, setScrollToColumn] = useState<number>(0);
+  const [syncing, setSyncing] = useState(false);
 
   const getCellKey = useCallback((tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`, []);
 
@@ -284,6 +285,67 @@ const Index = () => {
     e.target.value = '';
   };
 
+  const handleSyncToServer = async () => {
+    setSyncing(true);
+    try {
+      const cellsToSync = Object.entries(cells).map(([key, cell]) => ({
+        tab_id: cell.tab_id,
+        row_index: cell.row_index,
+        col_index: cell.col_index,
+        content: cell.content
+      }));
+
+      const response = await fetch(API_URLS.cells, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sync_all', cells: cellsToSync, columnNames })
+      });
+
+      if (response.ok) {
+        toast.success('Все изменения сохранены на сервер!');
+      } else {
+        toast.error('Ошибка синхронизации');
+      }
+    } catch {
+      toast.error('Ошибка синхронизации');
+    }
+    setSyncing(false);
+  };
+
+  const handleSyncFromServer = async () => {
+    setSyncing(true);
+    try {
+      const [cellsResponse, columnsResponse] = await Promise.all([
+        fetch(API_URLS.cells),
+        fetch(API_URLS.cells + '?action=get_columns')
+      ]);
+
+      if (cellsResponse.ok && columnsResponse.ok) {
+        const cellsData = await cellsResponse.json();
+        const columnsData = await columnsResponse.json();
+
+        const cellsMap: Record<string, Cell> = {};
+        cellsData.cells.forEach((cell: Cell) => {
+          const key = getCellKey(cell.tab_id, cell.row_index, cell.col_index);
+          cellsMap[key] = cell;
+        });
+        setCells(cellsMap);
+
+        if (columnsData.columnNames) {
+          setColumnNames(columnsData.columnNames);
+          localStorage.setItem('columnNamesByTab', JSON.stringify(columnsData.columnNames));
+        }
+
+        toast.success('Данные загружены с сервера!');
+      } else {
+        toast.error('Ошибка загрузки данных');
+      }
+    } catch {
+      toast.error('Ошибка загрузки данных');
+    }
+    setSyncing(false);
+  };
+
   const handleImageClick = async (imageUrl: string) => {
     try {
       const img = new Image();
@@ -339,7 +401,30 @@ const Index = () => {
               ))}
             </TabsList>
             {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-              <div className="flex items-center gap-1 bg-card rounded-lg p-1">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-card rounded-lg p-1 border border-border">
+                  <Button
+                    onClick={handleSyncToServer}
+                    disabled={syncing}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-3"
+                    title="Сохранить все изменения на сервер"
+                  >
+                    <Icon name="CloudUpload" size={16} />
+                  </Button>
+                  <Button
+                    onClick={handleSyncFromServer}
+                    disabled={syncing}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-3"
+                    title="Загрузить данные с сервера"
+                  >
+                    <Icon name="CloudDownload" size={16} />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-1 bg-card rounded-lg p-1">
                 {Array.from({ length: 10 }, (_, i) => (
                   <button
                     key={i}
@@ -353,6 +438,7 @@ const Index = () => {
                     {i + 1}
                   </button>
                 ))}
+                </div>
               </div>
             )}
           </div>
