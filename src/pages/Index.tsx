@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -35,7 +35,44 @@ interface Tab {
   position: number;
 }
 
+interface CellComponentProps {
+  cellKey: string;
+  cell: Cell | undefined;
+  row: number;
+  col: number;
+  tabId: number;
+  activeTab: number;
+  onCellClick: (row: number, col: number) => void;
+  onCellDoubleClick: (row: number, col: number) => void;
+  onHeaderChange: (key: string, header: string) => void;
+  onHeaderBlur: (key: string) => Promise<void>;
+}
 
+const CellComponent = memo(({ cellKey, cell, row, col, tabId, activeTab, onCellClick, onCellDoubleClick, onHeaderChange, onHeaderBlur }: CellComponentProps) => (
+  <div 
+    key={cellKey} 
+    className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[110px] md:min-h-[105px] group relative flex flex-col" 
+    onClick={() => onCellClick(row, col)} 
+    onDoubleClick={() => onCellDoubleClick(row, col)}
+  >
+    <input
+      type="text"
+      value={cell?.header || ''}
+      onChange={(e) => {
+        e.stopPropagation();
+        onHeaderChange(cellKey, e.target.value);
+      }}
+      onBlur={() => onHeaderBlur(cellKey)}
+      onClick={(e) => e.stopPropagation()}
+      className="text-lg text-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-1 mb-2 placeholder:text-foreground/5 uppercase font-medium"
+      placeholder="заголовок..."
+    />
+    <div className="text-sm text-foreground/60 line-clamp-5 whitespace-pre-wrap break-words flex-1">{cell?.content || ''}</div>
+    {cell?.content && <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
+  </div>
+));
+
+CellComponent.displayName = 'CellComponent';
 
 const Index = () => {
   const [tabs, setTabs] = useState<Tab[]>([]);
@@ -48,6 +85,7 @@ const Index = () => {
   const [editingColumn, setEditingColumn] = useState<number | null>(null);
   const [editColumnValue, setEditColumnValue] = useState('');
   const [scrollToColumn, setScrollToColumn] = useState<number>(0);
+  const [savingHeaders, setSavingHeaders] = useState<Set<string>>(new Set());
 
   const getCellKey = useCallback((tabId: number, row: number, col: number) => `${tabId}-${row}-${col}`, []);
 
@@ -90,16 +128,14 @@ const Index = () => {
   useEffect(() => {
     loadTabs();
     loadInitialData();
-  }, [loadInitialData]);
+  }, []);
 
   useEffect(() => {
     if (activeTab && tabs.length > 0) {
       loadCells(activeTab);
       setScrollToColumn(0);
     }
-  }, [activeTab, tabs]);
-
-
+  }, [activeTab, tabs.length, loadCells]);
 
   const loadTabs = async () => {
     try {
@@ -126,7 +162,7 @@ const Index = () => {
     }
   };
 
-  const loadCells = async (tabId: number) => {
+  const loadCells = useCallback(async (tabId: number) => {
     try {
       const cacheKey = `cells_${tabId}`;
       const cached = localStorage.getItem(cacheKey);
@@ -149,7 +185,7 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getCellKey]);
 
   const handleCellClick = useCallback((row: number, col: number) => {
     const content = cells[getCellKey(activeTab, row, col)]?.content;
@@ -188,13 +224,13 @@ const Index = () => {
     }
   };
 
-  const handleColumnDoubleClick = (colIndex: number) => {
+  const handleColumnDoubleClick = useCallback((colIndex: number) => {
     const tabColumns = columnNames[activeTab] || {};
     setEditColumnValue(tabColumns[colIndex] || `УРОК ${colIndex + 1}`);
     setEditingColumn(colIndex);
-  };
+  }, [activeTab, columnNames]);
 
-  const handleSaveColumnName = () => {
+  const handleSaveColumnName = useCallback(() => {
     if (editingColumn === null) return;
     const tabColumns = columnNames[activeTab] || {};
     const updatedTabColumns = { ...tabColumns, [editingColumn]: editColumnValue };
@@ -204,7 +240,45 @@ const Index = () => {
     setEditingColumn(null);
     setEditColumnValue('');
     toast.success('Название колонки сохранено!');
-  };
+  }, [editingColumn, columnNames, activeTab, editColumnValue]);
+
+  const handleHeaderChange = useCallback((key: string, header: string) => {
+    const [tabIdStr, rowStr, colStr] = key.split('-');
+    const tabId = parseInt(tabIdStr);
+    const row = parseInt(rowStr);
+    const col = parseInt(colStr);
+    const cell = cells[key];
+    const updated = { ...cells, [key]: { ...cell, tab_id: tabId, row_index: row, col_index: col, content: cell?.content || '', header } };
+    setCells(updated);
+    localStorage.setItem(`cells_${activeTab}`, JSON.stringify(updated));
+  }, [cells, activeTab]);
+
+  const handleHeaderBlur = useCallback(async (key: string) => {
+    const currentCell = cells[key];
+    const newHeader = currentCell?.header || '';
+    if (savingHeaders.has(key)) return;
+    
+    setSavingHeaders(prev => new Set(prev).add(key));
+    try {
+      await fetch(API_URLS.cells, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          tab_id: currentCell?.tab_id, 
+          row_index: currentCell?.row_index, 
+          col_index: currentCell?.col_index, 
+          content: currentCell?.content || '', 
+          header: newHeader 
+        }),
+      });
+    } finally {
+      setSavingHeaders(prev => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }, [cells, savingHeaders]);
 
   const handleExportToExcel = async () => {
     try {
@@ -252,8 +326,8 @@ const Index = () => {
     }
   };
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const colWidth = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 16 : 300) : GRID_CONFIG.desktopWidth;
+  const isMobile = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 768, []);
+  const colWidth = useMemo(() => isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 16 : 300) : GRID_CONFIG.desktopWidth, [isMobile]);
 
   return (
     <div className="min-h-screen bg-background p-2 md:pb-0">
@@ -317,39 +391,19 @@ const Index = () => {
                       const key = getCellKey(tab.id, row, col);
                       const cell = cells[key];
                       return (
-                        <div key={key} className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[110px] md:min-h-[105px] group relative flex flex-col" onClick={() => handleCellClick(row, col)} onDoubleClick={() => handleCellDoubleClick(row, col)}>
-                          <input
-                            type="text"
-                            value={cell?.header || ''}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              const updated = { ...cells, [key]: { ...cell, tab_id: tab.id, row_index: row, col_index: col, content: cell?.content || '', header: e.target.value } };
-                              setCells(updated);
-                              localStorage.setItem(`cells_${activeTab}`, JSON.stringify(updated));
-                            }}
-                            onBlur={async () => {
-                              const currentCell = cells[key];
-                              const newHeader = currentCell?.header || '';
-                              try {
-                                console.log('Saving header:', { tab_id: activeTab, row_index: row, col_index: col, header: newHeader, content: currentCell?.content || '' });
-                                const response = await fetch(API_URLS.cells, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ tab_id: activeTab, row_index: row, col_index: col, content: currentCell?.content || '', header: newHeader }),
-                                });
-                                const result = await response.json();
-                                console.log('Header saved:', result);
-                              } catch (error) {
-                                console.error('Error saving header:', error);
-                              }
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-lg text-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-1 mb-2 placeholder:text-foreground/5 uppercase font-medium"
-                            placeholder="заголовок..."
-                          />
-                          <div className="text-sm text-foreground/60 line-clamp-5 whitespace-pre-wrap break-words flex-1">{cell?.content || ''}</div>
-                          {cell?.content && <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
-                        </div>
+                        <CellComponent
+                          key={key}
+                          cellKey={key}
+                          cell={cell}
+                          row={row}
+                          col={col}
+                          tabId={tab.id}
+                          activeTab={activeTab}
+                          onCellClick={handleCellClick}
+                          onCellDoubleClick={handleCellDoubleClick}
+                          onHeaderChange={handleHeaderChange}
+                          onHeaderBlur={handleHeaderBlur}
+                        />
                       );
                     })}
                     </div>
