@@ -288,7 +288,7 @@ const Index = () => {
   const handleSyncToServer = async () => {
     setSyncing(true);
     try {
-      const allCells: Cell[] = [];
+      const allCells: any[] = [];
       
       for (const tab of tabs) {
         if (tab.name === 'Картинки') continue;
@@ -319,9 +319,12 @@ const Index = () => {
       if (response.ok) {
         toast.success('Все изменения сохранены на сервер!');
       } else {
+        const errorText = await response.text();
+        console.error('Sync error:', errorText);
         toast.error('Ошибка синхронизации');
       }
-    } catch {
+    } catch (error) {
+      console.error('Sync exception:', error);
       toast.error('Ошибка синхронизации');
     }
     setSyncing(false);
@@ -339,6 +342,9 @@ const Index = () => {
         const cellsData = await cellsResponse.json();
         const columnsData = await columnsResponse.json();
 
+        console.log('Loaded cells:', cellsData.cells?.length);
+        console.log('Loaded columns:', columnsData.columnNames);
+
         const cellsByTab: Record<number, Record<string, Cell>> = {};
         
         cellsData.cells.forEach((cell: Cell) => {
@@ -351,6 +357,7 @@ const Index = () => {
 
         for (const [tabId, tabCells] of Object.entries(cellsByTab)) {
           localStorage.setItem(`cells_${tabId}`, JSON.stringify(tabCells));
+          console.log(`Saved ${Object.keys(tabCells).length} cells for tab ${tabId}`);
         }
 
         const currentTabCells = cellsByTab[activeTab] || {};
@@ -363,9 +370,12 @@ const Index = () => {
 
         toast.success('Данные загружены с сервера!');
       } else {
+        const errorText = await cellsResponse.text();
+        console.error('Load error:', errorText);
         toast.error('Ошибка загрузки данных');
       }
-    } catch {
+    } catch (error) {
+      console.error('Load exception:', error);
       toast.error('Ошибка загрузки данных');
     }
     setSyncing(false);
