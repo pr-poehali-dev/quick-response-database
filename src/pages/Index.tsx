@@ -360,15 +360,16 @@ const Index = () => {
           console.log(`Saved ${Object.keys(tabCells).length} cells for tab ${tabId}`);
         }
 
-        const currentTabCells = cellsByTab[activeTab] || {};
-        setCells(currentTabCells);
-
         if (columnsData.columnNames) {
           setColumnNames(columnsData.columnNames);
           localStorage.setItem('columnNamesByTab', JSON.stringify(columnsData.columnNames));
         }
 
-        toast.success('Данные загружены с сервера!');
+        const currentTabCells = cellsByTab[activeTab] || {};
+        setCells(currentTabCells);
+        console.log(`Set ${Object.keys(currentTabCells).length} cells for current tab ${activeTab}`);
+
+        toast.success(`Данные загружены! Ячеек: ${cellsData.cells?.length || 0}`);
       } else {
         const errorText = await cellsResponse.text();
         console.error('Load error:', errorText);
