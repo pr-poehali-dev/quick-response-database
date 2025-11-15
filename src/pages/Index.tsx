@@ -501,20 +501,44 @@ const Index = () => {
 
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-8 pt-2 px-2 space-y-2 z-50">
             {tabs.find(t => t.id === activeTab)?.name !== 'Картинки' && (
-              <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {Array.from({ length: 10 }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setScrollToColumn(i)}
-                    className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
-                      scrollToColumn === i 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 justify-center bg-card rounded-lg p-1 border border-border">
+                  <Button
+                    onClick={handleSyncToServer}
+                    disabled={syncing}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-3"
+                    title="Сохранить все изменения на сервер"
                   >
-                    {i + 1}
-                  </button>
-                ))}
+                    <Icon name="CloudUpload" size={16} />
+                  </Button>
+                  <Button
+                    onClick={handleSyncFromServer}
+                    disabled={syncing}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-3"
+                    title="Загрузить данные с сервера"
+                  >
+                    <Icon name="CloudDownload" size={16} />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setScrollToColumn(i)}
+                      className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
+                        scrollToColumn === i 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
