@@ -448,22 +448,20 @@ const Index = () => {
                                 setCells(updated);
                                 localStorage.setItem(`cells_${activeTab}`, JSON.stringify(updated));
                               }}
-                              onBlur={async (e) => {
-                                const currentHeader = cell?.header || '';
-                                const newHeader = e.target.value;
-                                if (currentHeader !== newHeader) {
-                                  try {
-                                    console.log('Saving header:', { tab_id: activeTab, row_index: row, col_index: col, header: newHeader });
-                                    const response = await fetch(API_URLS.cells, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ tab_id: activeTab, row_index: row, col_index: col, content: cell?.content || '', header: newHeader }),
-                                    });
-                                    const result = await response.json();
-                                    console.log('Header saved:', result);
-                                  } catch (error) {
-                                    console.error('Error saving header:', error);
-                                  }
+                              onBlur={async () => {
+                                const currentCell = cells[key];
+                                const newHeader = currentCell?.header || '';
+                                try {
+                                  console.log('Saving header:', { tab_id: activeTab, row_index: row, col_index: col, header: newHeader, content: currentCell?.content || '' });
+                                  const response = await fetch(API_URLS.cells, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ tab_id: activeTab, row_index: row, col_index: col, content: currentCell?.content || '', header: newHeader }),
+                                  });
+                                  const result = await response.json();
+                                  console.log('Header saved:', result);
+                                } catch (error) {
+                                  console.error('Error saving header:', error);
                                 }
                               }}
                               onClick={(e) => e.stopPropagation()}
