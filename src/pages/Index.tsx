@@ -338,7 +338,7 @@ const Index = () => {
 
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
-          <div className="hidden md:flex flex-col items-end space-y-2 mb-2 pr-16">
+          <div className="hidden md:flex flex-col items-start space-y-2 mb-2">
             <div className="flex items-center gap-2">
               <TabsList className="overflow-x-auto bg-card h-auto flex-wrap">
                 {tabs.map(tab => (
