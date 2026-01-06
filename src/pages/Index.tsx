@@ -108,7 +108,21 @@ const Index = () => {
   const syncWithServer = useCallback(async () => {
     setSyncing(true);
     try {
-      // Очищаем старые данные из кеша
+      // Очищаем Service Worker кеш
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
+        await new Promise(resolve => {
+          navigator.serviceWorker.addEventListener('message', function handler(e) {
+            if (e.data && e.data.type === 'CACHE_CLEARED') {
+              navigator.serviceWorker.removeEventListener('message', handler);
+              resolve(null);
+            }
+          });
+          setTimeout(resolve, 1000);
+        });
+      }
+
+      // Очищаем localStorage
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -167,10 +181,12 @@ const Index = () => {
         }
       }
 
-      toast.success('Данные обновлены!');
+      toast.success('Данные обновлены! Перезагрузка...');
+      
+      // Перезагружаем страницу для применения изменений
+      setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       toast.error('Ошибка обновления');
-    } finally {
       setSyncing(false);
     }
   }, [getCellKey, activeTab]);

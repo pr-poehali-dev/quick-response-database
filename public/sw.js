@@ -1,4 +1,4 @@
-const CACHE_NAME = 'app-v2';
+const CACHE_NAME = 'app-v3';
 const CACHE_LIMIT = 50;
 
 self.addEventListener('install', (e) => {
@@ -27,4 +27,15 @@ self.addEventListener('fetch', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then(k => Promise.all(k.map(n => n !== CACHE_NAME && caches.delete(n)))));
   return self.clients.claim();
+});
+
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'CLEAR_CACHE') {
+    e.waitUntil(
+      caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))))
+        .then(() => self.registration.unregister())
+        .then(() => self.clients.matchAll())
+        .then(clients => clients.forEach(client => client.postMessage({ type: 'CACHE_CLEARED' })))
+    );
+  }
 });
