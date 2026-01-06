@@ -325,20 +325,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background p-2 md:pb-0">
+      <Button
+        onClick={syncWithServer}
+        disabled={syncing}
+        variant="outline"
+        size="icon"
+        className="fixed top-4 right-4 z-50 rounded-full shadow-lg"
+        title="Синхронизация с сервером"
+      >
+        <Icon name={syncing ? "RefreshCw" : "CloudUpload"} size={20} className={syncing ? 'animate-spin' : ''} />
+      </Button>
+
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
           <div className="hidden md:flex flex-col items-center space-y-2 mb-2">
             <div className="flex items-center gap-2 w-full justify-center">
-              <Button
-                onClick={syncWithServer}
-                disabled={syncing}
-                variant="outline"
-                size="sm"
-                className="flex-shrink-0"
-              >
-                <Icon name={syncing ? "RefreshCw" : "CloudUpload"} size={16} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Синхронизация...' : 'Синхронизация'}
-              </Button>
               <TabsList className="justify-center overflow-x-auto bg-card h-auto flex-wrap">
                 {tabs.map(tab => (
                   <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -417,19 +418,9 @@ const Index = () => {
 
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-8 pt-2 px-2 space-y-2 z-50">
             <div className="flex items-center gap-2 mb-2">
-              <Button
-                onClick={syncWithServer}
-                disabled={syncing}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-              >
-                <Icon name={syncing ? "RefreshCw" : "CloudUpload"} size={16} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Синхронизация...' : 'Синхронизация'}
-              </Button>
               <Button onClick={handleExportToExcel} variant="outline" size="sm" className="flex-1">
                 <Icon name="Download" size={16} className="mr-2" />
-                Excel
+                Экспорт в Excel
               </Button>
             </div>
             <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
