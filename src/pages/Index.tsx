@@ -116,6 +116,16 @@ const Index = () => {
   const syncWithServer = useCallback(async () => {
     setSyncing(true);
     try {
+      // Очищаем старые данные из кеша
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('cells_') || key === 'tabs' || key === 'columnNames')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
       const [tabsResponse, cellsResponse, columnsResponse] = await Promise.all([
         fetch(API_URLS.tabs),
         fetch(API_URLS.cells),
