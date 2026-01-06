@@ -175,7 +175,8 @@ const Index = () => {
 
   useEffect(() => {
     loadFromCache();
-  }, [loadFromCache]);
+    syncWithServer();
+  }, [loadFromCache, syncWithServer]);
 
   useEffect(() => {
     if (activeTab) {
