@@ -98,14 +98,6 @@ const Index = () => {
           setCells(JSON.parse(savedCells));
         }
       }
-    } else {
-      const defaultTabs = [
-        { id: 1, name: 'УПРАЖНЕНИЯ', position: 1 },
-        { id: 2, name: 'Картинки', position: 2 }
-      ];
-      setTabs(defaultTabs);
-      setActiveTab(1);
-      localStorage.setItem('tabs', JSON.stringify(defaultTabs));
     }
 
     if (savedColumnNames) {
