@@ -340,6 +340,10 @@ const Index = () => {
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
           <div className="hidden md:flex flex-col items-start space-y-2 mb-2">
             <div className="flex items-center gap-2">
+              <Button onClick={syncWithServer} variant="outline" size="sm" disabled={syncing} className="flex-shrink-0">
+                <Icon name={syncing ? "Loader2" : "RefreshCw"} size={16} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Обновление...' : 'Обновить'}
+              </Button>
               <TabsList className="overflow-x-auto bg-card h-auto flex-wrap">
                 {tabs.map(tab => (
                   <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
