@@ -339,11 +339,7 @@ const Index = () => {
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
           <div className="hidden md:flex flex-col items-start space-y-2 mb-2">
-            <div className="flex items-center gap-2">
-              <Button onClick={syncWithServer} variant="outline" size="sm" disabled={syncing} className="flex-shrink-0">
-                <Icon name={syncing ? "Loader2" : "RefreshCw"} size={16} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Обновление...' : 'Обновить'}
-              </Button>
+            <div className="flex items-center gap-2 w-full">
               <TabsList className="overflow-x-auto bg-card h-auto flex-wrap">
                 {tabs.map(tab => (
                   <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -351,10 +347,16 @@ const Index = () => {
                   </TabsTrigger>
                 ))}
               </TabsList>
-              <Button onClick={handleExportToExcel} variant="outline" size="sm" className="flex-shrink-0">
-                <Icon name="Download" size={16} className="mr-2" />
-                Экспорт в Excel
-              </Button>
+              <div className="flex items-center gap-2 ml-auto">
+                <Button onClick={syncWithServer} variant="outline" size="sm" disabled={syncing} className="flex-shrink-0">
+                  <Icon name={syncing ? "Loader2" : "RefreshCw"} size={16} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Обновление...' : 'Обновить'}
+                </Button>
+                <Button onClick={handleExportToExcel} variant="outline" size="sm" className="flex-shrink-0">
+                  <Icon name="Download" size={16} className="mr-2" />
+                  Экспорт в Excel
+                </Button>
+              </div>
             </div>
             <div className="flex items-center gap-1 bg-card rounded-lg p-1">
               {Array.from({ length: 10 }, (_, i) => (
