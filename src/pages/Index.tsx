@@ -122,11 +122,17 @@ const Index = () => {
         fetch(API_URLS.cells + '?action=get_columns')
       ]);
 
+      let newTabs: Tab[] = [];
+      let newActiveTabId = activeTab;
+
       if (tabsResponse.ok) {
         const tabsData = await tabsResponse.json();
-        if (tabsData.tabs) {
-          setTabs(tabsData.tabs);
-          localStorage.setItem('tabs', JSON.stringify(tabsData.tabs));
+        if (tabsData.tabs && tabsData.tabs.length > 0) {
+          newTabs = tabsData.tabs;
+          setTabs(newTabs);
+          localStorage.setItem('tabs', JSON.stringify(newTabs));
+          newActiveTabId = newTabs[0].id;
+          setActiveTab(newActiveTabId);
         }
       }
 
@@ -146,8 +152,8 @@ const Index = () => {
           localStorage.setItem(`cells_${tabId}`, JSON.stringify(tabCells));
         }
 
-        if (cellsByTab[activeTab]) {
-          setCells(cellsByTab[activeTab]);
+        if (cellsByTab[newActiveTabId]) {
+          setCells(cellsByTab[newActiveTabId]);
         }
       }
 
@@ -159,9 +165,9 @@ const Index = () => {
         }
       }
 
-      toast.success('Синхронизация завершена!');
+      toast.success('Данные обновлены!');
     } catch (error) {
-      toast.error('Ошибка синхронизации');
+      toast.error('Ошибка обновления');
     } finally {
       setSyncing(false);
     }
