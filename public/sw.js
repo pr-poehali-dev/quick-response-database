@@ -1,4 +1,4 @@
-const CACHE_NAME = 'app-v3';
+const CACHE_NAME = 'app-v4';
 const CACHE_LIMIT = 50;
 
 self.addEventListener('install', (e) => {
@@ -9,18 +9,30 @@ self.addEventListener('install', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return;
-  
+
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-      if (!res || res.status !== 200) return res;
-      return caches.open(CACHE_NAME).then(c => {
-        c.keys().then(keys => {
-          if (keys.length > CACHE_LIMIT) c.delete(keys[0]);
+    caches.match(e.request).then(cached => {
+      if (cached) {
+        // Есть в кеше — отдаём мгновенно, в фоне обновляем кеш
+        fetch(e.request).then(res => {
+          if (res && res.status === 200) {
+            caches.open(CACHE_NAME).then(c => c.put(e.request, res.clone()));
+          }
+        }).catch(() => {});
+        return cached;
+      }
+      // Нет в кеше — идём в сеть и сохраняем
+      return fetch(e.request).then(res => {
+        if (!res || res.status !== 200) return res;
+        return caches.open(CACHE_NAME).then(c => {
+          c.keys().then(keys => {
+            if (keys.length > CACHE_LIMIT) c.delete(keys[0]);
+          });
+          c.put(e.request, res.clone());
+          return res;
         });
-        c.put(e.request, res.clone());
-        return res;
-      });
-    }).catch(() => caches.match('/')))
+      }).catch(() => caches.match('/'));
+    })
   );
 });
 
