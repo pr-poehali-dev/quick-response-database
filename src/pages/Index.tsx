@@ -1,73 +1,13 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import * as XLSX from 'xlsx';
-
-const API_URLS = {
-  tabs: 'https://functions.poehali.dev/86104f38-169c-4ce4-b077-38f1883a61c5',
-  cells: 'https://functions.poehali.dev/f2f9a3f0-13c8-4862-8b02-aea4ab6b62d4'
-};
-
-const GRID_CONFIG = {
-  rows: 25,
-  cols: 15,
-  desktopWidth: 552
-};
-
-interface Cell {
-  id?: number;
-  tab_id: number;
-  row_index: number;
-  col_index: number;
-  content: string;
-  header?: string;
-}
-
-interface Tab {
-  id: number;
-  name: string;
-  position: number;
-}
-
-interface CellComponentProps {
-  cellKey: string;
-  cell: Cell | undefined;
-  row: number;
-  col: number;
-  tabId: number;
-  activeTab: number;
-  onCellClick: (row: number, col: number) => void;
-  onCellDoubleClick: (row: number, col: number) => void;
-  onHeaderChange: (key: string, header: string) => void;
-}
-
-const CellComponent = memo(function CellComponent({ cellKey, cell, row, col, tabId, activeTab, onCellClick, onCellDoubleClick, onHeaderChange }: CellComponentProps) {
-  return (
-    <div 
-      className="bg-card hover:bg-accent transition-colors cursor-pointer p-2 min-h-[110px] md:min-h-[105px] group relative flex flex-col" 
-      onClick={() => onCellClick(row, col)} 
-      onDoubleClick={() => onCellDoubleClick(row, col)}
-    >
-      <input
-        type="text"
-        value={cell?.header || ''}
-        onChange={(e) => {
-          e.stopPropagation();
-          onHeaderChange(cellKey, e.target.value);
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className="text-lg text-foreground bg-transparent border-b border-border/30 focus:border-primary/50 outline-none px-1 py-1 mb-2 placeholder:text-foreground/5 uppercase font-medium"
-        placeholder="заголовок..."
-      />
-      <div className="text-sm text-foreground/60 line-clamp-5 whitespace-pre-wrap break-words flex-1">{cell?.content || ''}</div>
-      {cell?.content && <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Copy" size={12} className="text-muted-foreground" /></div>}
-    </div>
-  );
-});
+import { API_URLS, GRID_CONFIG, Cell, Tab } from './grid/types';
+import CellComponent from './grid/CellComponent';
+import GridToolbar from './grid/GridToolbar';
+import { EditCellDialog, EditColumnDialog } from './grid/EditDialogs';
 
 const Index = () => {
   const [tabs, setTabs] = useState<Tab[]>([]);
@@ -87,7 +27,7 @@ const Index = () => {
   const loadFromCache = useCallback(() => {
     const savedTabs = localStorage.getItem('tabs');
     const savedColumnNames = localStorage.getItem('columnNames');
-    
+
     if (savedTabs) {
       const parsedTabs = JSON.parse(savedTabs);
       setTabs(parsedTabs);
@@ -108,7 +48,6 @@ const Index = () => {
   const syncWithServer = useCallback(async () => {
     setSyncing(true);
     try {
-      // Очищаем Service Worker кеш
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
         await new Promise(resolve => {
@@ -122,8 +61,7 @@ const Index = () => {
         });
       }
 
-      // Очищаем localStorage
-      const keysToRemove = [];
+      const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && (key.startsWith('cells_') || key === 'tabs' || key === 'columnNames')) {
@@ -155,7 +93,7 @@ const Index = () => {
       if (cellsResponse.ok) {
         const cellsData = await cellsResponse.json();
         const cellsByTab: Record<number, Record<string, Cell>> = {};
-        
+
         cellsData.cells?.forEach((cell: Cell) => {
           if (!cellsByTab[cell.tab_id]) {
             cellsByTab[cell.tab_id] = {};
@@ -182,8 +120,6 @@ const Index = () => {
       }
 
       toast.success('Данные обновлены! Перезагрузка...');
-      
-      // Перезагружаем страницу для применения изменений
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       toast.error('Ошибка обновления');
@@ -225,7 +161,7 @@ const Index = () => {
     try {
       const key = getCellKey(activeTab, editingCell.row, editingCell.col);
       const currentCell = cells[key];
-      
+
       const updatedCell = {
         tab_id: activeTab,
         row_index: editingCell.row,
@@ -311,17 +247,17 @@ const Index = () => {
   const handleExportToExcel = () => {
     try {
       const workbook = XLSX.utils.book_new();
-      
+
       tabs.forEach(tab => {
         const tabCells = JSON.parse(localStorage.getItem(`cells_${tab.id}`) || '{}');
         const tabColumns = columnNames[tab.id] || {};
-        const sheetData: any[][] = [];
-        
-        const headerRow = Array.from({ length: GRID_CONFIG.cols }, (_, i) => 
+        const sheetData: string[][] = [];
+
+        const headerRow = Array.from({ length: GRID_CONFIG.cols }, (_, i) =>
           tabColumns[i] || `УРОК ${i + 1}`
         );
         sheetData.push(headerRow);
-        
+
         for (let row = 0; row < GRID_CONFIG.rows; row++) {
           const rowData = [];
           for (let col = 0; col < GRID_CONFIG.cols; col++) {
@@ -332,11 +268,11 @@ const Index = () => {
           }
           sheetData.push(rowData);
         }
-        
+
         const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
         XLSX.utils.book_append_sheet(workbook, worksheet, tab.name.substring(0, 31));
       });
-      
+
       XLSX.writeFile(workbook, 'данные.xlsx');
       toast.success('Excel файл загружен!');
     } catch (error) {
@@ -362,47 +298,19 @@ const Index = () => {
 
       <div className="max-w-[100vw] mx-auto flex flex-col h-screen md:h-auto">
         <Tabs value={activeTab.toString()} onValueChange={(v) => setActiveTab(Number(v))} className="w-full flex flex-col h-full md:h-auto">
-          <div className="hidden md:flex flex-col items-start space-y-2 mb-2">
-            <div className="flex items-center gap-2 w-full">
-              <TabsList className="overflow-x-auto bg-card h-auto flex-wrap">
-                {tabs.map(tab => (
-                  <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] md:text-xs px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                    {tab.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              <div className="flex items-center gap-2 ml-auto">
-                <Button onClick={syncWithServer} variant="outline" size="sm" disabled={syncing} className="flex-shrink-0">
-                  <Icon name={syncing ? "Loader2" : "RefreshCw"} size={16} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? 'Обновление...' : 'Обновить'}
-                </Button>
-                <Button onClick={handleExportToExcel} variant="outline" size="sm" className="flex-shrink-0">
-                  <Icon name="Download" size={16} className="mr-2" />
-                  Экспорт в Excel
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 bg-card rounded-lg p-1">
-              {Array.from({ length: 10 }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setScrollToColumn(i)}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                    scrollToColumn === i 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-          </div>
+          <GridToolbar
+            tabs={tabs}
+            syncing={syncing}
+            scrollToColumn={scrollToColumn}
+            onSync={syncWithServer}
+            onExport={handleExportToExcel}
+            onScrollToColumn={setScrollToColumn}
+          />
 
           {tabs.map(tab => (
             <TabsContent key={tab.id} value={tab.id.toString()} className="mt-0 flex-1 md:flex-none mb-[140px] md:mb-0">
-              <div 
-                className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-10rem)] md:h-[calc(100vh-10rem)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+              <div
+                className="border border-border rounded-lg overflow-x-auto overflow-y-auto bg-card h-[calc(100vh-10rem)] md:h-[calc(100vh-10rem)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                 ref={(el) => {
                   if (el) {
                     el.scrollLeft = scrollToColumn * colWidth;
@@ -445,75 +353,23 @@ const Index = () => {
               </div>
             </TabsContent>
           ))}
-
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-8 pt-2 px-2 space-y-2 z-50">
-            <div className="flex items-center gap-2 mb-2">
-              <Button onClick={syncWithServer} variant="outline" size="sm" disabled={syncing} className="flex-1">
-                <Icon name={syncing ? "Loader2" : "RefreshCw"} size={16} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Обновление...' : 'Обновить'}
-              </Button>
-              <Button onClick={handleExportToExcel} variant="outline" size="sm" className="flex-1">
-                <Icon name="Download" size={16} className="mr-2" />
-                Экспорт в Excel
-              </Button>
-            </div>
-            <TabsList className="w-full justify-center overflow-x-auto bg-card h-auto flex-wrap">
-              {tabs.map(tab => (
-                <TabsTrigger key={tab.id} value={tab.id.toString()} className="text-[10px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  {tab.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            
-            <div className="flex items-center gap-1 bg-card rounded-lg p-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {Array.from({ length: 10 }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setScrollToColumn(i)}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex-shrink-0 ${
-                    scrollToColumn === i 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-          </div>
         </Tabs>
 
-        <Dialog open={!!editingCell} onOpenChange={() => { setEditingCell(null); setEditValue(''); }}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Редактировать ячейку</DialogTitle>
-            </DialogHeader>
-            <Textarea value={editValue} onChange={(e) => setEditValue(e.target.value)} rows={10} className="min-h-[200px]" placeholder="Введите текст..." />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setEditingCell(null); setEditValue(''); }}>Отмена</Button>
-              <Button onClick={handleSaveCell}>Сохранить</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <EditCellDialog
+          open={!!editingCell}
+          value={editValue}
+          onChange={setEditValue}
+          onSave={handleSaveCell}
+          onClose={() => { setEditingCell(null); setEditValue(''); }}
+        />
 
-        <Dialog open={editingColumn !== null} onOpenChange={() => { setEditingColumn(null); setEditColumnValue(''); }}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Изменить название колонки</DialogTitle>
-            </DialogHeader>
-            <input
-              type="text"
-              value={editColumnValue}
-              onChange={(e) => setEditColumnValue(e.target.value)}
-              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
-              placeholder="Название колонки"
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setEditingColumn(null); setEditColumnValue(''); }}>Отмена</Button>
-              <Button onClick={handleSaveColumnName}>Сохранить</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <EditColumnDialog
+          open={editingColumn !== null}
+          value={editColumnValue}
+          onChange={setEditColumnValue}
+          onSave={handleSaveColumnName}
+          onClose={() => { setEditingColumn(null); setEditColumnValue(''); }}
+        />
       </div>
     </div>
   );
