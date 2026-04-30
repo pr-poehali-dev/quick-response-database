@@ -448,6 +448,10 @@ const Index = () => {
 
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-8 pt-2 px-2 space-y-2 z-50">
             <div className="flex items-center gap-2 mb-2">
+              <Button onClick={syncWithServer} variant="outline" size="sm" disabled={syncing} className="flex-1">
+                <Icon name={syncing ? "Loader2" : "RefreshCw"} size={16} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Обновление...' : 'Обновить'}
+              </Button>
               <Button onClick={handleExportToExcel} variant="outline" size="sm" className="flex-1">
                 <Icon name="Download" size={16} className="mr-2" />
                 Экспорт в Excel
